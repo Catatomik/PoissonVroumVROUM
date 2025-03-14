@@ -40,8 +40,9 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
     }
 
     fclose(fp);
-    return controller_port_found && display_timeout_value_found &&
-           fish_update_interval_found;
+    bool success = controller_port_found && display_timeout_value_found &&
+                   fish_update_interval_found;
+    return !success;
 }
 
 int main() {

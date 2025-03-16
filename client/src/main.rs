@@ -1,21 +1,26 @@
 use clap::Parser;
+use std::fs;
+use std::path::PathBuf;
+
+use cli::cli::command_loop;
+pub mod cli;
 
 #[derive(Parser)]
 #[command(name = "PoissonVroumVROUM")]
 #[command(version = "0.1")]
 #[command(about = "Here we start fishes", long_about = None)]
 struct Cli {
-    #[arg(long)]
-    id: String,
-    #[arg(default_value_t = 12345)]
-    port: u16,
+    #[arg(value_name = "CONFIG", help = "File of configuration for the client", required = true)]
+    config: PathBuf,
 }
-
 
 fn main() {
     let cli = Cli::parse();
 
-    println!("id : {}", cli.id);
-    println!("port : {}", cli.port);
-    println!("Hello, world!");
+    match fs::read_to_string(&cli.config) {
+        Ok(content) => println!("Content :\n{}", content),
+        Err(e) => println!("Error :\n{}", e),
+    }
+    
+    command_loop();
 }

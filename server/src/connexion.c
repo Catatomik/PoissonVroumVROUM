@@ -28,7 +28,7 @@ int config_socket(int portno, const char *ip_addr,struct sockaddr_in *serv_addr 
   
   bzero((char *) serv_addr, sizeof(serv_addr));
   serv_addr->sin_family = AF_INET;
-  serv_addr->sin_addr.s_addr = inet_addr(ip_addr);
+  serv_addr->sin_addr.s_addr = INADDR_ANY;//inet_addr(ip_addr);
   serv_addr->sin_port = htons(portno);
   if (bind(sockfd, (struct sockaddr *) serv_addr,
 	   sizeof(*serv_addr)) < 0) 
@@ -90,9 +90,10 @@ int main(int argc, char *argv[])
   
   int sockfd, newsockfd, portno, clilen;
   char buffer[256];
-  struct sockaddr_in serv_addr, cli_addr;
-  int n;
-  int i = 12345;
+  struct sockaddr_in serv_addr, cli_addr, test_addr;
+  int n, test_port, test_sock;
+  int next_port = controller_port;
+  int port_found = 0;
 
   sockfd = config_socket(controller_port, controller_addr, &serv_addr);
 
@@ -108,11 +109,30 @@ int main(int argc, char *argv[])
 
     // ISSUE : 12345+i is port for next connection but don't check if it's free
     // ISSUE : 12345+i impossible to use again a old port closed
-    i += 1;
+    /*next_port = 12345;
+    port_found = 0;
+    
+    while(port_found == 0)
+      {
+	next_port += 1;
+	test_sock = config_socket(next_port, controller_addr, &test_addr);
+	if (bind(test_sock, (struct sockaddr *) &test_addr, sizeof(test_addr)) > 0){
+	  close(test_sock);
+	  printf("test_sock :%d\n", test_sock);
+	  printf("test_port :%d\n", next_port);
+	}
+	else{
+	  port_found = 1;
+	  close(test_sock);
+	}
+	sleep(1);
+	}*/
+
+    next_port += 1;
     // structure create for good argument in thread function
     threads_client_args_t *args = malloc(sizeof(threads_client_args_t));
     args->client_sockfd = newsockfd;
-    args->client_port = i;
+    args->client_port = next_port;
     
     if (pthread_create(&thread_client, NULL, thread_function_client, (void *)args))
       {

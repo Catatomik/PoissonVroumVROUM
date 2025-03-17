@@ -57,6 +57,14 @@ impl Config {
     pub fn get_resources(&self) -> PathBuf {
         self.resources.to_path_buf()
     }
+
+    pub fn display(&self) {
+        println!("Address: {}", self.get_address());
+        println!("Id: {}", self.get_id());
+        println!("Port: {}", self.get_port());
+        println!("Timeout: {}", self.get_timeout());
+        println!("Resources: {:?}", self.get_resources().file_name());
+    }
 }
 
 fn read_lines(filename: PathBuf) -> io::Result<io::Lines<io::BufReader<File>>> {

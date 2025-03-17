@@ -23,11 +23,8 @@ fn main() {
     println!("Config used :\x1b[34m");
 
     let config_stc = Config::new(cli.config).unwrap();
-    println!("Address: {}", config_stc.get_address());
-    println!("Id: {}", config_stc.get_id());
-    println!("Port: {}", config_stc.get_port());
-    println!("Timeout: {}", config_stc.get_timeout());
-    println!("Resources: {:?}\x1b[0m", config_stc.get_resources().file_name());
+    config_stc.display();
+    print!("\x1b[0m");
 
     // Start loop of the app
     command_loop();

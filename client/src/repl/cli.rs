@@ -21,12 +21,38 @@ pub fn command_loop() {
         match main_command {
             "status" => status(),
             "help" => help(),
-            // TODO : check type of size and format of position
             "addFish" => {
                 if let (Some(name), Some("at"), Some(position), Some(size), Some(behavior)) =
                     (command_parts.next(), command_parts.next(), command_parts.next(), command_parts.next(), command_parts.next())
                 {
-                    add_fish(name, position, size, behavior);
+                    let size = match size.parse::<u32>() {
+                        Ok(c) => c,
+                        Err(_) =>  {
+                            println!("size must be an integer");
+                            continue;
+                        },
+                    };
+                    if let Some((position_x, position_y)) = position.split_once('x') {
+                        let position_x = match position_x.parse::<u32>() {
+                            Ok(c) => c,
+                            Err(_) =>  {
+                                println!("x position must be an integer");
+                                continue;
+                            },
+                        };
+                        let position_y = match position_y.parse::<u32>() {
+                            Ok(c) => c,
+                            Err(_) =>  {
+                                println!("y position must be an integer");
+                                continue;
+                            },
+                        };
+                        add_fish(name, position_x, position_y, size, behavior);
+                    }
+                    else {
+                        println!("position should be like 10x10");
+                        continue;
+                    }
                 } else {
                     println!("Usage: addFish <name> at <position> <size> <behavior>");
                 }
@@ -69,8 +95,8 @@ fn status() {
     println!("Status controller");
 }
 
-fn add_fish(name:&str, position:&str, size:&str, behavior:&str) {
-    println!("Add fish named {name} at {position} with size {size} and behavior {behavior}");
+fn add_fish(name:&str, x:u32, y:u32, size:u32, behavior:&str) {
+    println!("Add fish named {name} at {x}x{y} with size {size} and behavior {behavior}");
 }
 
 fn del_fish(name:&str) {

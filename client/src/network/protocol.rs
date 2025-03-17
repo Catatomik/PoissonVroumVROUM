@@ -1,35 +1,39 @@
+//! Internal communication protocol
+
 use crate::view::entities;
 use std::{error::Error, fmt::Display};
 
+/// A server packet, i.e. a packet sent by a server following internal communication protocol
 pub enum ServerPacket {
-    // < greeting <ID>
+    /// < greeting <ID>
     Greeting(Option<usize>),
     Pong,
-    // < no greeting
-    // Requested ID doesn't exist or is already affected
+    /// < no greeting
+    /// Requested ID doesn't exist or is already affected
     NoGreeting,
-    // List of fishes to manage. Contains
-    // - position to go to
-    // - size (hitbox)
-    // - time to move
+    /// List of fishes to manage. Contains
+    /// - position to go to
+    /// - size (hitbox)
+    /// - time to move
     FishesList(Vec<entities::Fish>),
     Ok,
     NOk,
     Bye,
 }
 
+/// A client packet, i.e. a packet sent by a client following internal communication protocol
 pub enum ClientPacket {
-    // > hello [as in N<ID>]
+    /// > hello [as in N<ID>]
     Hello(Option<usize>),
     Ping,
-    // Periodically ask for fishes
+    /// Periodically ask for fishes
     GetFishes,
-    // Continuously ask for fishes
-    // Optionally takes a number of lists to receive
+    /// Continuously ask for fishes
+    /// Optionally takes a number of lists to receive
     LsFishes(Option<usize>),
     AddFish(entities::Fish),
     DelFish,
-    // VroumVROUM
+    /// VroumVROUM
     StartFish,
     LogOut,
 }

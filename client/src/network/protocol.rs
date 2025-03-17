@@ -28,9 +28,11 @@ pub enum ClientPacket {
     Ping,
     /// Periodically ask for fishes
     GetFishes,
-    /// Continuously ask for fishes
+    /// Continuously ask for fishes, stacking answers
     /// Optionally takes a number of lists to receive
     LsFishes(Option<usize>),
+    /// Continuously ask for fishes
+    GetFishesContinuously,
     AddFish(entities::Fish),
     DelFish,
     /// VroumVROUM

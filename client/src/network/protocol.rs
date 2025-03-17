@@ -1,11 +1,6 @@
 use crate::view::entities;
 use std::{error::Error, fmt::Display};
 
-pub enum NetworkPacket {
-    ClientPacket(ClientPacket),
-    ServerPacket(ServerPacket),
-}
-
 pub enum ServerPacket {
     // < greeting <ID>
     Greeting(Option<usize>),

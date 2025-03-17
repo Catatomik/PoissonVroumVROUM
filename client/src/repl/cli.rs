@@ -10,17 +10,19 @@ pub fn command_loop() {
             .read_line(&mut full_command)
             .expect("Failed to read line");
         eprint!("\x1b[0m");
-        // println!("Your command : {}", cmd);
+        
         let full_command = full_command.trim();
         let mut command_parts = full_command.split_whitespace();
-        let main_command = command_parts.next();
+        let main_command = match command_parts.next() {
+            Some(content) => content,
+            _ => continue,
+        };
 
-        // TODO : find a better way (enum? / static string?)
         match main_command {
-            Some("status") => status(),
-            Some("help") => help(),
-            // TODO : Opti and check type of position and size
-            Some("addFish") => {
+            "status" => status(),
+            "help" => help(),
+            // TODO : check type of size and format of position
+            "addFish" => {
                 if let (Some(name), Some("at"), Some(position), Some(size), Some(behavior)) =
                     (command_parts.next(), command_parts.next(), command_parts.next(), command_parts.next(), command_parts.next())
                 {
@@ -29,21 +31,21 @@ pub fn command_loop() {
                     println!("Usage: addFish <name> at <position> <size> <behavior>");
                 }
             }
-            Some("delFish") => {
+            "delFish" => {
                 if let Some(name) = command_parts.next() {
                     del_fish(name);
                 } else {
                     println!("Usage: delFish <name>");
                 }
             }
-            Some("startFish") => {
+            "startFish" => {
                 if let Some(name) = command_parts.next() {
                     start_fish(name);
                 } else {
                     println!("Usage: startFish <name>");
                 }
             }
-            Some("quit") => break,
+            "quit" => break,
             _ => {
                 println!("Invalid command !");
                 println!("use help");

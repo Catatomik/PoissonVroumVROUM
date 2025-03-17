@@ -1,9 +1,11 @@
 use clap::Parser;
-use std::fs;
 use std::path::PathBuf;
 
-use cli::cli::command_loop;
-pub mod cli;
+use repl::cli::command_loop;
+pub mod repl;
+
+use config::Config;
+pub mod config;
 
 #[derive(Parser)]
 #[command(name = "PoissonVroumVROUM")]
@@ -17,10 +19,16 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
-    match fs::read_to_string(&cli.config) {
-        Ok(content) => println!("Content :\n{}", content),
-        Err(e) => println!("Error :\n{}", e),
-    }
-    
+    // Print config file
+    println!("Config used :\x1b[34m");
+
+    let config_stc = Config::new(cli.config).unwrap();
+    println!("Address: {}", config_stc.get_address());
+    println!("Id: {}", config_stc.get_id());
+    println!("Port: {}", config_stc.get_port());
+    println!("Timeout: {}", config_stc.get_timeout());
+    println!("Resources: {:?}\x1b[0m", config_stc.get_resources().file_name());
+
+    // Start loop of the app
     command_loop();
 }

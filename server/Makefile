@@ -37,6 +37,8 @@ $(TESTBUILDDIR)/%.test: $(TESTBUILDDIR)/%.o $(SRC_NO_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Run a single test
+# Uses static pattern (https://www.gnu.org/software/make/manual/html_node/Static-Pattern.html)
+# In order to suggest a test bin to run in shell with tab
 $(TEST_BINS_EXEC): %: $(TESTBUILDDIR)/%.test
 	printf '\t- %s: ' $@
 	./$< >/dev/null && echo 'succès' || echo 'échec'
@@ -49,5 +51,5 @@ clean:
 
 # Rules that don't produce files
 .PHONY: all test clean
-# 
+# Do not print executed commands while running tests, for cleaner output
 .SILENT: $(TEST_BINS_EXEC)

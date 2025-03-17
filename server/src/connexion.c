@@ -28,7 +28,7 @@ int config_socket(int portno, const char *ip_addr,struct sockaddr_in *serv_addr 
   
   bzero((char *) serv_addr, sizeof(serv_addr));
   serv_addr->sin_family = AF_INET;
-  serv_addr->sin_addr.s_addr = INADDR_ANY;//inet_addr(ip_addr);
+  serv_addr->sin_addr.s_addr = inet_addr(ip_addr);
   serv_addr->sin_port = htons(portno);
   if (bind(sockfd, (struct sockaddr *) serv_addr,
 	   sizeof(*serv_addr)) < 0) 
@@ -42,40 +42,23 @@ void *thread_function_client(void *args)
   int client_sockfd = client_args->client_sockfd;
   int new_port = client_args->client_port;
   
-  struct sockaddr_in serv_addr,cli_addr;
-  int clilen;
-  int sockfd =  config_socket(new_port, "127.0.0.1", &serv_addr);
-  char buffer_reader[256];
-  char buffer_change_port[256];
+  char buffer[256];
   int n;
 
-  // Ask to client to connect to his port (manually)
-  n = sprintf(buffer_change_port,"Please reconnect : your port is now %d",new_port);
-  if (n < 0) error("ERROR formating string");
-  n = write(client_sockfd, buffer_change_port, n);
-  if (n < 0) error("ERROR writing to socket");
-  close(client_sockfd);
-
-  // Open listener on the client assigned port
-  listen(sockfd,5);
-  clilen = sizeof(cli_addr);
-  client_sockfd = accept(sockfd, 
-		     (struct sockaddr *) &cli_addr, 
-		     &clilen);
-   if (client_sockfd < 0) 
-      error("ERROR on accept");
-
   // Handles socket exchange
-  bzero(buffer_reader,256);
+  bzero(buffer,256);
   
-  n = read(client_sockfd, buffer_reader, 255);
+  n = read(client_sockfd, buffer, 255);
   if (n < 0) error("ERROR reading from socket");
-  
-  printf("The message from client %d: %s\n",client_sockfd, buffer_reader);
+
+
+  //
+  printf("The message from client %d: %s\n",client_sockfd, buffer);
   n = write(client_sockfd,"I got your message",18);
   if (n < 0) error("ERROR writing to socket");
   close(client_sockfd);
 
+  
   return NULL;
 }
 
@@ -91,9 +74,7 @@ int main(int argc, char *argv[])
   int sockfd, newsockfd, portno, clilen;
   char buffer[256];
   struct sockaddr_in serv_addr, cli_addr, test_addr;
-  int n, test_port, test_sock;
-  int next_port = controller_port;
-  int port_found = 0;
+  int n;
 
   sockfd = config_socket(controller_port, controller_addr, &serv_addr);
 
@@ -107,32 +88,11 @@ int main(int argc, char *argv[])
     if (newsockfd < 0) 
       error("ERROR on accept");
 
-    // ISSUE : 12345+i is port for next connection but don't check if it's free
-    // ISSUE : 12345+i impossible to use again a old port closed
-    /*next_port = 12345;
-    port_found = 0;
-    
-    while(port_found == 0)
-      {
-	next_port += 1;
-	test_sock = config_socket(next_port, controller_addr, &test_addr);
-	if (bind(test_sock, (struct sockaddr *) &test_addr, sizeof(test_addr)) > 0){
-	  close(test_sock);
-	  printf("test_sock :%d\n", test_sock);
-	  printf("test_port :%d\n", next_port);
-	}
-	else{
-	  port_found = 1;
-	  close(test_sock);
-	}
-	sleep(1);
-	}*/
-
-    next_port += 1;
+ 
     // structure create for good argument in thread function
     threads_client_args_t *args = malloc(sizeof(threads_client_args_t));
     args->client_sockfd = newsockfd;
-    args->client_port = next_port;
+    args->client_port = controller_port;
     
     if (pthread_create(&thread_client, NULL, thread_function_client, (void *)args))
       {

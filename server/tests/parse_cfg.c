@@ -1,4 +1,5 @@
 #include "parse_cfg.h"
+#include "utils.h"
 #include <stdio.h>
 
 void test_config_parsing() {

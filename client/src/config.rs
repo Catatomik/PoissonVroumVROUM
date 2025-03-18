@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::collections::HashMap;
 
+use std::ffi::OsStr;
+
 pub struct Config {
     controller_address: String,
     id: String,
@@ -29,11 +31,11 @@ impl Config {
 
         Ok ( 
             Config {
-                controller_address: (config_map.get("controller-address").ok_or("controller-address miss".to_string())?.clone()),
-                id: (config_map.get("id").ok_or("id miss".to_string())?.clone()),
-                controller_port: (config_map.get("controller-port").ok_or("controller-port miss".to_string())?.parse::<u32>().map_err(|_|"controller-port has to be an Interger")?), 
-                display_timeout_value: (config_map.get("display-timeout-value").ok_or("display-timeout-value miss".to_string())?.parse::<u32>().map_err(|_|"display-timeout-value has to be an Interger")?), 
-                resources: (PathBuf::from(config_map.get("resources").ok_or("resources miss".to_string())?))
+                controller_address: (hasmap_get(&config_map, "controller-address")?),
+                id: (hasmap_get(&config_map, "id")?),
+                controller_port: (hasmap_get(&config_map, "controller-port")?.parse::<u32>().map_err(|_|"controller-port has to be an Interger")?), 
+                display_timeout_value: (hasmap_get(&config_map, "display-timeout-value")?.parse::<u32>().map_err(|_|"display-timeout-value has to be an Interger")?), 
+                resources: (PathBuf::from(hasmap_get(&config_map, "resources")?))
             }
         )
     }
@@ -63,6 +65,13 @@ impl Config {
         println!("Id: {}", self.get_id());
         println!("Port: {}", self.get_port());
         println!("Timeout: {}", self.get_timeout());
-        println!("Resources: {:?}", self.get_resources().file_name());
+        println!("Resources name: {:?}", match self.get_resources().file_name() {
+            Some(name) => name,
+            None => OsStr::new("No file selected"),
+        })
     }
+}
+
+fn hasmap_get(map:&HashMap<String, String>, key:&str) -> Result<String, String> {
+    map.get(key).ok_or(format!("{key} miss")).cloned()
 }

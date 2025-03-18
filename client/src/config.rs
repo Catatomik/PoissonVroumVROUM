@@ -15,18 +15,18 @@ impl Config {
     pub fn new(config_path:PathBuf) -> Result<Config, String> {
         let mut config_map = HashMap::new();
 
-        if let Ok(lines) = read_lines(config_path) {
-            for line in lines.map_while(Result::ok)  {
-                if line.is_empty() || line.starts_with('#') {
-                    continue;
-                }
-                if let Some((key, value)) = line.split_once('=') {
-                    config_map.insert(key.trim().to_string(), value.trim().to_string());
-                }
+        let file = File::open(config_path).map_err(|_|"can't open the file".to_string())?;
+        let lines = io::BufReader::new(file).lines();
+
+        for line in lines.map_while(Result::ok) {
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            if let Some((key, value)) = line.split_once('=') {
+                config_map.insert(key.trim().to_string(), value.trim().to_string());
             }
         }
 
-        // Ugly but works
         Ok ( 
             Config {
                 controller_address: (config_map.get("controller-address").ok_or("controller-address miss".to_string())?.clone()),
@@ -65,9 +65,4 @@ impl Config {
         println!("Timeout: {}", self.get_timeout());
         println!("Resources: {:?}", self.get_resources().file_name());
     }
-}
-
-fn read_lines(filename: PathBuf) -> io::Result<io::Lines<io::BufReader<File>>> {
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
 }

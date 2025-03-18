@@ -1,1 +1,1 @@
-pub mod vue;
+pub mod display;

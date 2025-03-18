@@ -1,3 +1,5 @@
+mod view;
+
 fn main() {
-    println!("Hello, world!");
+    view::display::display();
 }

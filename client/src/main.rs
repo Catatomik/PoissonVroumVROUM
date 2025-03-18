@@ -23,7 +23,7 @@ fn main() {
     println!("Config used :\x1b[34m");
 
     let config_stc = Config::new(cli.config).unwrap();
-    config_stc.display();
+    println!("{}", config_stc);
     print!("\x1b[0m");
 
     // Start loop of the app

@@ -1,3 +1,4 @@
+use std::fmt;
 use std::path::PathBuf;
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -59,13 +60,15 @@ impl Config {
     pub fn get_resources(&self) -> PathBuf {
         self.resources.to_path_buf()
     }
+}
 
-    pub fn display(&self) {
-        println!("Address: {}", self.get_address());
-        println!("Id: {}", self.get_id());
-        println!("Port: {}", self.get_port());
-        println!("Timeout: {}", self.get_timeout());
-        println!("Resources name: {:?}", match self.get_resources().file_name() {
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Address: {}", self.get_address())?;
+        writeln!(f, "Id: {}", self.get_id())?;
+        writeln!(f, "Port: {}", self.get_port())?;
+        writeln!(f, "Timeout: {}", self.get_timeout())?;
+        writeln!(f, "Resources name: {:?}", match self.get_resources().file_name() {
             Some(name) => name,
             None => OsStr::new("No file selected"),
         })

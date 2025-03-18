@@ -1,7 +1,5 @@
-
 use std::collections::HashMap;
 use raylib::prelude::*;
-
 
 pub fn display() {
     let screen_width = 600;

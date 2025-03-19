@@ -21,7 +21,6 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
     while (fgets(buffer, MAX_LEN, fp)) {
         // Remove trailing newline
         buffer[strcspn(buffer, "\n")] = 0;
-        int len = strlen(buffer);
         char *first_equal_pos = strchr(buffer, '=');
         char *value_start = first_equal_pos + 1;
 
@@ -40,15 +39,7 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
     }
 
     fclose(fp);
-    return controller_port_found && display_timeout_value_found &&
-           fish_update_interval_found;
-}
-
-int main() {
-    struct config_t cfg;
-    config_from_file(&cfg, "./controller.cfg");
-    printf("config (controller_port=%d, display_timeout_value=%d, "
-           "fish_update_interval=%d)\n",
-           cfg.controller_port, cfg.display_timeout_value,
-           cfg.fish_update_interval);
+    bool success = controller_port_found && display_timeout_value_found &&
+                   fish_update_interval_found;
+    return !success;
 }

@@ -20,11 +20,9 @@ pub fn display() {
     for &fish in &fish_names {
         let texture = rl
 			.load_texture(&thread, &format!("assets/{}", fish))
-            .expect(&format!("Impossible de charger le poisson : {}", fish));
-        
+			.expect(&format!("Impossible de charger le poisson : {}", fish));   
         map_fish_texture.insert(fish.to_string(), texture);
     }
-
 	let texture_default = rl
             .load_texture(&thread, "assets/default.png")
 			.expect(&format!("Impossible de charger le poisson : {}", "default"));

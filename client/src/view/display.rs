@@ -19,13 +19,13 @@ pub fn display() {
 
     for &fish in &fish_names {
         let texture = rl
-			.load_texture(&thread, &format!("assets/{}", fish))
-			.expect(&format!("Impossible de charger le poisson : {}", fish));   
-        map_fish_texture.insert(fish.to_string(), texture);
+		.load_texture(&thread, &format!("assets/{}", fish))
+		.expect(&format!("Impossible de charger le poisson : {}", fish));   
+	map_fish_texture.insert(fish.to_string(), texture);
     }
-	let texture_default = rl
-            .load_texture(&thread, "assets/default.png")
-			.expect(&format!("Impossible de charger le poisson : {}", "default"));
+    let texture_default = rl
+	    .load_texture(&thread, "assets/default.png")
+	    .expect(&format!("Impossible de charger le poisson : {}", "default"));
 ;
 
     let bg_source = Rectangle::new(0.0, 0.0, bg_texture.width() as f32, bg_texture.height() as f32);
@@ -34,7 +34,7 @@ pub fn display() {
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread); 
-		let texture=find_right_texture("fish2".to_owned(),&map_fish_texture,&texture_default);
+	let texture=find_right_texture("fish2".to_owned(),&map_fish_texture,&texture_default);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
         display_fish(&mut d, texture, 100.0, 150.0, 80, 40, 0.0);
     	display_fish(&mut d, texture, 300.0, 200.0, 100, 50, 45.0); 

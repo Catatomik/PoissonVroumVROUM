@@ -8,11 +8,7 @@
 
 void add_viewer_config(struct viewers_config_t *config, int id, int x, int y,
                        int width, int height) {
-    if (config == NULL) {
-        fprintf(stderr, "Error: viewers_config is NULL at %s:%d\n", __FILE__,
-                __LINE__);
-        return;
-    }
+    assert(config != NULL);
     int config_index = config->viewers_count;
     if (config->viewers_configs == NULL) {
         assert(config->viewers_count == 0);

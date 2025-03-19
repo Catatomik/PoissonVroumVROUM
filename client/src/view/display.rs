@@ -8,7 +8,7 @@ pub fn display() {
     let screen_height = 600;
     let (mut rl, thread) = raylib::init().size(screen_width, screen_height).title("Aquarium").build();
 
-    let bg_image_path = "aqua.png"; 
+    let bg_image_path = "assets/aqua.png"; 
     let bg_texture = rl
         .load_texture(&thread, bg_image_path)
         .expect(&format!("Impossible de charger l'image de background de l'aquarium : {}", bg_image_path));
@@ -19,14 +19,14 @@ pub fn display() {
 
     for &fish in &fish_names {
         let texture = rl
-            .load_texture(&thread, fish)
+			.load_texture(&thread, &format!("assets/{}", fish))
             .expect(&format!("Impossible de charger le poisson : {}", fish));
         
         map_fish_texture.insert(fish.to_string(), texture);
     }
 
 	let texture_default = rl
-            .load_texture(&thread, "default.png")
+            .load_texture(&thread, "assets/default.png")
 			.expect(&format!("Impossible de charger le poisson : {}", "default"));
 ;
 
@@ -66,24 +66,12 @@ fn display_fish(
     );
 }
 
-
-fn find_right_texture<'a>(
+	fn find_right_texture<'a>(
     name_fish: String,
     map_fish_texture: &'a HashMap<String, Texture2D>,
-	default: &'a  Texture2D,
-
+    default: &'a Texture2D,
 ) -> &'a Texture2D {
+
     let fish_path = format!("{}.png", name_fish);
-
-      let texture = map_fish_texture
-        .get(&fish_path)
-        .or_else(|| map_fish_texture.get("default.png"));
-
-    // Si une texture est trouvée, on la retourne, sinon on lui donne la texture par défaut (notre logo)
-    match texture {
-        Some(tex) => tex,
-        None => {
-            default
-        }
-    }
-    }
+    map_fish_texture.get(&fish_path).unwrap_or(default)
+}

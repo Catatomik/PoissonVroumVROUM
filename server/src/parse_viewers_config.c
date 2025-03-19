@@ -55,7 +55,6 @@ int viewers_config_from_file(struct viewers_config_t *config,
     while (fgets(buffer, MAX_LEN, fp)) {
         // Remove trailing newline
         buffer[strcspn(buffer, "\n")] = 0;
-        int len = strlen(buffer);
         if (i == 0) {
             // header is "{aquarium_width} x {aquarium_height}"
             sscanf(buffer, "%d x %d", &config->width, &config->height);
@@ -78,28 +77,10 @@ int viewers_config_from_file(struct viewers_config_t *config,
     return 0;
 }
 
-void viewers_config_free(struct viewers_config_t *config) {
+void viewers_config_free_internals(struct viewers_config_t *config) {
     if (config == NULL)
         return;
     if (config->viewers_configs == NULL)
         return;
     free(config->viewers_configs);
-}
-
-int main() {
-    struct viewers_config_t config;
-    viewers_config_from_file(&config, "viewers.config");
-
-    printf("Aquarium width=%d, Aquarium height=%d\n", config.width,
-           config.height);
-    printf("Viewer count=%d\n", config.viewers_count);
-    printf("Viewers configs: \n");
-    for (int i = 0; i < config.viewers_count; i++) {
-        printf("\tViewer %d: width=%d height=%d x=%d y=%d\n",
-               config.viewers_configs[i].id, config.viewers_configs[i].width,
-               config.viewers_configs[i].height, config.viewers_configs[i].x,
-               config.viewers_configs[i].y);
-    }
-
-    viewers_config_free(&config);
 }

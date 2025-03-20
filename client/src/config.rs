@@ -1,5 +1,6 @@
 use std::fmt;
 use std::path::PathBuf;
+use std::net::Ipv4Addr;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::collections::HashMap;
@@ -7,7 +8,7 @@ use std::collections::HashMap;
 use std::ffi::OsStr;
 
 pub struct Config {
-    controller_address: String,
+    controller_address: Ipv4Addr,
     id: String,
     controller_port: u32,
     display_timeout_value: u32,
@@ -32,17 +33,23 @@ impl Config {
 
         Ok ( 
             Config {
-                controller_address: (hasmap_get(&config_map, "controller-address")?),
+                controller_address: (hasmap_get(&config_map, "controller-address")?
+                                                .parse::<Ipv4Addr>()
+                                                .map_err(|_|"controller-address has to be an X.X.X.X with X between 0 and 255")?),
                 id: (hasmap_get(&config_map, "id")?),
-                controller_port: (hasmap_get(&config_map, "controller-port")?.parse::<u32>().map_err(|_|"controller-port has to be an Interger")?), 
-                display_timeout_value: (hasmap_get(&config_map, "display-timeout-value")?.parse::<u32>().map_err(|_|"display-timeout-value has to be an Interger")?), 
+                controller_port: (hasmap_get(&config_map, "controller-port")?
+                                                .parse::<u32>()
+                                                .map_err(|_|"controller-port has to be an Interger")?), 
+                display_timeout_value: (hasmap_get(&config_map, "display-timeout-value")?
+                                                .parse::<u32>()
+                                                .map_err(|_|"display-timeout-value has to be an Interger")?), 
                 resources: (PathBuf::from(hasmap_get(&config_map, "resources")?))
             }
         )
     }
 
-    pub fn get_address(&self) -> &str {
-        self.controller_address.as_str()
+    pub fn get_address(&self) -> Ipv4Addr {
+        self.controller_address
     }
 
     pub fn get_port(&self) -> u32 {

@@ -16,7 +16,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(config_path:PathBuf) -> Result<Config, String> {
+    pub fn new(config_path: &PathBuf) -> Result<Config, String> {
         let mut config_map = HashMap::new();
 
         let file = File::open(config_path).map_err(|_|"can't open the file".to_string())?;

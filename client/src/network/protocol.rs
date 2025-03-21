@@ -1,9 +1,10 @@
 //! Internal communication protocol
 
 use crate::view::entities;
-use std::{error::Error, fmt::Display};
+use std::str::FromStr;
 
 /// A server packet, i.e. a packet sent by a server following internal communication protocol
+#[derive(Debug)]
 pub enum ServerPacket {
     /// < greeting <ID>
     Greeting(Option<usize>),
@@ -21,7 +22,28 @@ pub enum ServerPacket {
     Bye,
 }
 
+#[derive(Debug)]
+pub enum ServerPacketParsingError {
+    InvalidFormat,
+    UnsupportedCommand(String),
+}
+
+impl FromStr for ServerPacket {
+    type Err = ServerPacketParsingError;
+
+    fn from_str(raw_packet: &str) -> Result<ServerPacket, ServerPacketParsingError> {
+        use ServerPacketParsingError::*;
+
+        let first_word = raw_packet.split_whitespace().next().ok_or(InvalidFormat)?;
+        match first_word {
+            "pong" => Ok(ServerPacket::Pong),
+            other => Err(UnsupportedCommand(other.to_string())),
+        }
+    }
+}
+
 /// A client packet, i.e. a packet sent by a client following internal communication protocol
+#[derive(Debug)]
 pub enum ClientPacket {
     /// > hello [as in N<ID>]
     Hello(Option<usize>),
@@ -38,4 +60,13 @@ pub enum ClientPacket {
     /// VroumVROUM
     StartFish,
     LogOut,
+}
+
+impl ToString for ClientPacket {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Ping => String::from("ping"),
+            _ => unimplemented!(),
+        }
+    }
 }

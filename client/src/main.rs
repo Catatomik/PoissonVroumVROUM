@@ -7,6 +7,8 @@ pub mod repl;
 use config::Config;
 pub mod config;
 
+mod view;
+
 #[derive(Parser)]
 #[command(name = "PoissonVroumVROUM")]
 #[command(version = "0.1")]
@@ -28,4 +30,5 @@ fn main() {
 
     // Start loop of the app
     command_loop();
+    // view::display::display();
 }

@@ -11,9 +11,9 @@ use std::{
     net::{Ipv4Addr, SocketAddrV4},
     path::PathBuf,
     str::FromStr as _,
-    thread::sleep,
-    time::Duration,
+    sync::{Arc, Mutex},
 };
+use view::entities;
 
 #[derive(Parser)]
 #[command(name = "PoissonVroumVROUM")]
@@ -28,50 +28,38 @@ struct Cli {
     config: PathBuf,
 }
 
-struct App {
-    cli: Cli,
-    fish_api: FishApi<TcpClient>,
-}
-
-impl App {
-    pub fn handle_packet(&mut self, packet: ServerPacket) {
-        match packet {
-            network::protocol::ServerPacket::Pong => {
-                println!("Pong!")
-            }
-            _ => unimplemented!(),
+pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: ServerPacket) {
+    match packet {
+        network::protocol::ServerPacket::Pong => {
+            println!("Pong!")
         }
+        _ => unimplemented!(),
     }
 }
 
 fn main() {
-    // Start loop of the app
-    command_loop();
-    // view::display::display();
+    let cli = Cli::parse();
 
-    let mut app = App {
-        fish_api: FishApi::new(TcpClient::new(SocketAddrV4::new(
-            Ipv4Addr::from_str("127.0.0.1").expect("Couldn't parse IPv4 address"),
-            12345,
-        ))),
-        cli: Cli::parse(),
-    };
-
-    let config = Config::new(&app.cli.config).unwrap();
+    let config = Config::new(&cli.config).unwrap();
     // Print config file
     println!("Config used :\x1b[34m{}\x1b[0m", config);
 
-    loop {
-        match app.fish_api.try_receive() {
-            Ok(Some(res)) => app.handle_packet(res),
-            Ok(None) => {}
-            Err(e) => {
-                eprintln!("Error while treating Fish API response {:?}", e);
-            }
-        };
+    let fishes = Arc::new(Mutex::new(Vec::new()));
 
-        // Additional actions
+    let mut fish_api = FishApi::new(
+        TcpClient::new(SocketAddrV4::new(
+            Ipv4Addr::from_str("127.0.0.1").expect("Couldn't parse IPv4 address"),
+            12345,
+        )),
+        {
+            let mut fishes = fishes.clone();
+            move |p| handle_packet(&mut fishes, p)
+        },
+    );
 
-        sleep(Duration::from_millis(100));
-    }
+    fish_api.ping();
+
+    // Start loop of the app
+    command_loop();
+    // view::display::display();
 }

@@ -3,10 +3,12 @@
 //! Simple sync TCP client
 
 use super::api::Transport;
-use std::io::{self, Read, Write as _};
-use std::net::SocketAddrV4;
-use std::net::TcpStream;
-use std::str::{FromStr, Utf8Error, from_utf8};
+use std::{
+    fmt::Debug,
+    io::{self, Read, Write as _},
+    net::{SocketAddrV4, TcpStream},
+    str::{FromStr, Utf8Error, from_utf8},
+};
 
 #[derive(Debug)]
 pub enum TcpReceiveError<E> {
@@ -34,7 +36,10 @@ impl TcpClient {
     }
 }
 
-impl<Req: ToString, Res: FromStr> Transport<Req, Res> for TcpClient {
+impl<Req: ToString, Res: FromStr> Transport<Req, Res> for TcpClient
+where
+    <Res as FromStr>::Err: Debug,
+{
     type RequestError = io::Error;
 
     type ResponseError = TcpReceiveError<Res::Err>;

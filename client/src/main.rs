@@ -1,6 +1,7 @@
 mod config;
 mod network;
 mod repl;
+mod view;
 
 use clap::Parser;
 use config::Config;

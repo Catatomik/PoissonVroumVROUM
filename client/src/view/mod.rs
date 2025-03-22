@@ -1,1 +1,2 @@
-pub mod vue;
+pub mod display;
+pub mod entities;

@@ -10,11 +10,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "parse_cfg.h"
+
 pthread_mutex_t mutex;
 
 typedef struct {
   int client_sockfd;
-  int client_port;
   int *nb_thread_used;
 } threads_client_args_t;
 
@@ -23,7 +24,7 @@ void error(char *msg)
     perror(msg);
     exit(1);
 }
-int config_socket(int portno, const char *ip_addr,struct sockaddr_in *serv_addr ){
+int config_socket(int portno, const char *ip_addr,struct sockaddr_in *serv_addr){
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   
   if (sockfd < 0) 
@@ -43,7 +44,6 @@ void *thread_function_client(void *args)
 {
   threads_client_args_t *client_args = (threads_client_args_t *)args;
   int client_sockfd = client_args->client_sockfd;
-  int new_port = client_args->client_port;
   int *nb_thread_used = client_args->nb_thread_used;
   
   char buffer[256];
@@ -71,60 +71,65 @@ void *thread_function_client(void *args)
 
 int main(int argc, char *argv[])
 {
-  const char *controller_addr = "127.0.0.1";
-  int controller_port = 12345;
-  int display_timeout_value = 45;
-  int fish_update_interval = 1;
+  //init config structur of controller configuration file
+  struct config_t config;
+  if (config_from_file(&config, "../controller.cfg")){
+    const char *controller_addr = "127.0.0.1";
+    int controller_port = config.controller_port;    
+    //int display_timeout_value = config.display_timeout_value;
+    //int fish_update_interval = config.fish_update_interval;
 
-  int nb_thread = 5;
-  int nb_thread_used = 0;
-  pthread_t thread_client;
-  pthread_mutex_init(&mutex, NULL); // Initialisation du mutex
-  
-  int sockfd, newsockfd, portno;
-  
-  char buffer[256];
-  struct sockaddr_in serv_addr, cli_addr, test_addr;
-  int n;
 
-  sockfd = config_socket(controller_port, controller_addr, &serv_addr);
-  int clilen = (sizeof(cli_addr));
+    int nb_thread_used = 0;
+    pthread_t thread_client;
+    pthread_mutex_init(&mutex, NULL); // Initialisation du mutex
   
-  // Add infinite loop to keep server running and accept new connections
-  while(1){
-    listen(sockfd,5);
-    newsockfd = accept(sockfd, 
-		       (struct sockaddr *) &cli_addr, 
-		       &clilen);
-    if (newsockfd < 0) 
-      error("ERROR on accept");
+    int sockfd, newsockfd;
+    struct sockaddr_in serv_addr, cli_addr;
+
+    sockfd = config_socket(controller_port, controller_addr, &serv_addr);
+    int clilen = (sizeof(cli_addr));
+  
+    // Add infinite loop to keep server running and accept new connections
+    while(1){
+      listen(sockfd,5);
+      newsockfd = accept(sockfd, 
+			 (struct sockaddr *) &cli_addr, 
+			 (unsigned int * restrict) &clilen);
+      if (newsockfd < 0) 
+	error("ERROR on accept");
 
     
-    if (nb_thread_used < 5){
-      nb_thread_used += 1;
-      printf("nb_thread_used %d\n", nb_thread_used);
+      if (nb_thread_used < 5){
+	nb_thread_used += 1;
+	printf("nb_thread_used %d\n", nb_thread_used);
       
-      // structure create for good argument in thread function
-      threads_client_args_t *args = malloc(sizeof(threads_client_args_t));
-      args->client_sockfd = newsockfd;
-      args->client_port = controller_port;
-      args->nb_thread_used = &nb_thread_used;
+	// structure create for good argument in thread function
+	threads_client_args_t *args = malloc(sizeof(threads_client_args_t));
+	args->client_sockfd = newsockfd;
+	args->nb_thread_used = &nb_thread_used;
     
-      if (pthread_create(&thread_client, NULL, thread_function_client, (void *)args))
-	{
-	  fprintf(stderr, "ERROR creation client thread\n");
-	  close(newsockfd);
-	  free(args);
-	  continue;
-	}     
-    }
-    else{
-      sleep(0.3);
-    }
+	if (pthread_create(&thread_client, NULL, thread_function_client, (void *)args))
+	  {
+	    fprintf(stderr, "ERROR creation client thread\n");
+	    close(newsockfd);
+	    free(args);
+	    continue;
+	  }     
+      }
+      else{
+	sleep(0.3);
+      }
     
-    // not pthread_join because we don't wait the end of thread (parallize)
-    pthread_detach(thread_client);   
-  }
+      // not pthread_join because we don't wait the end of thread (parallize)
+      pthread_detach(thread_client);   
+    }
   
-  pthread_mutex_destroy(&mutex); 
+    pthread_mutex_destroy(&mutex);
+    return 0;
+  }
+  else{
+    printf("Error while parsing config file");
+    return -1;
+  }
 }

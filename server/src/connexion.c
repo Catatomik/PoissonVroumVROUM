@@ -111,7 +111,7 @@ void *start(void *config)
 	  }     
       }
       else{
-	usleep(0.3);
+	usleep(3);
       }
     
       // not pthread_join because we don't wait the end of thread (parallize)

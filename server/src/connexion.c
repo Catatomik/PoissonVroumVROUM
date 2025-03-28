@@ -17,6 +17,7 @@ pthread_mutex_t mutex;
 typedef struct {
   int client_sockfd;
   int *nb_thread_used;
+  int thread_id;
 } threads_client_args_t;
 
 void error(char *msg)
@@ -46,6 +47,7 @@ void *thread_function_client(void *args)
   threads_client_args_t *client_args = (threads_client_args_t *)args;
   int client_sockfd = client_args->client_sockfd;
   int *nb_thread_used = client_args->nb_thread_used;
+  int thread_id = client_args->thread_id;
   
   char buffer[256];
   int n;
@@ -57,7 +59,7 @@ void *thread_function_client(void *args)
   if (n < 0) error("ERROR reading from socket");
 
 
-  printf("The message from client %d: %s\n",client_sockfd, buffer);
+  printf("The message from client %d: %s\n", thread_id, buffer);
   n = write(client_sockfd,"I got your message",18);
   if (n < 0) error("ERROR writing to socket");
   close(client_sockfd);
@@ -72,7 +74,9 @@ void *thread_function_client(void *args)
 
 void *start(void *config)
 {
-  
+
+  int next_id = 0;
+  int thread_id;
     int nb_thread_used = 0;
     pthread_t thread_client;
     pthread_mutex_init(&mutex, NULL); // Initialisation du mutex
@@ -94,13 +98,18 @@ void *start(void *config)
 
     
       if (nb_thread_used < 5){
+	pthread_mutex_lock(&mutex);
 	nb_thread_used += 1;
+	pthread_mutex_unlock(&mutex);
+
+	thread_id = next_id++;
 	printf("nb_thread_used %d\n", nb_thread_used);
       
 	// structure create for good argument in thread function
 	threads_client_args_t *args = malloc(sizeof(threads_client_args_t));
 	args->client_sockfd = newsockfd;
 	args->nb_thread_used = &nb_thread_used;
+	args->thread_id = thread_id;
     
 	if (pthread_create(&thread_client, NULL, thread_function_client, (void *)args))
 	  {

@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     //init config structur of controller configuration file
     struct config_t *config = malloc(sizeof(struct config_t));
     if (config_from_file(config, "./controller.cfg")){
-      printf("hey");
+      
       //const char *controller_addr = "127.0.0.1";
       //int controller_port = config.controller_port;    
       //int display_timeout_value = config.display_timeout_value;

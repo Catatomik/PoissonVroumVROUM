@@ -28,6 +28,7 @@ pub enum ServerPacketParsingError {
     UnsupportedCommand(String),
 }
 
+/// Server packet deserialization
 impl FromStr for ServerPacket {
     type Err = ServerPacketParsingError;
 
@@ -62,6 +63,7 @@ pub enum ClientPacket {
     LogOut,
 }
 
+/// Client packet serialization
 impl ToString for ClientPacket {
     fn to_string(&self) -> String {
         match self {

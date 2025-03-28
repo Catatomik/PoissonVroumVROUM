@@ -1,6 +1,6 @@
 //! # Simple TCP client
 //!
-//! Simple sync TCP client
+//! Simple sync, non-blocking TCP client
 
 use super::api::Transport;
 use std::{
@@ -17,8 +17,11 @@ pub enum TcpReceiveError<E> {
     Utf8Error(Utf8Error),
 }
 
+/// Little wrapper around TcpClient to implement Transport
 pub struct TcpClient {
     stream: TcpStream,
+    /// Internal buffer to accumulate received data
+    /// Partially consumed when a line is found (contains \n)
     buf: Vec<u8>,
 }
 

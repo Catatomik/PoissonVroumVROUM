@@ -20,6 +20,21 @@ struct viewer_config_t {
 
 // parses a viewers config file at given path and assigns the parsed values to
 // the config object
+//
+// Format:
+// ```
+// 1000x1000
+// N1 0x0+500+500
+// N2 500x0+500+500
+// N3 0x500+500+500
+// N4 500x500+500+500
+// ```
+//
+// returns:
+//  0 if success
+//  EOF if EOF
+//  -2 if couldn't parse first "WxH" line
+//  n if couldn't parse line n
 int viewers_config_from_file(struct viewers_config_t *config,
                              const char *viewers_config_path);
 

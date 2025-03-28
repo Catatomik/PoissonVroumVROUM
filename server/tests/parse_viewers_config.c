@@ -1,20 +1,14 @@
 #include "parse_viewers_config.h"
-#include <stdio.h>
+#include <assert.h>
 
 int main() {
-    struct viewers_config_t config;
-    viewers_config_from_file(&config, "viewers.config");
+    struct viewers_config_t invalid_config;
+    assert(viewers_config_from_file(&invalid_config,
+                                    "tests/assets/no_x_viewers.config"));
+    viewers_config_free_internals(&invalid_config);
 
-    printf("Aquarium width=%d, Aquarium height=%d\n", config.width,
-           config.height);
-    printf("Viewer count=%d\n", config.viewers_count);
-    printf("Viewers configs: \n");
-    for (int i = 0; i < config.viewers_count; i++) {
-        printf("\tViewer %d: width=%d height=%d x=%d y=%d\n",
-               config.viewers_configs[i].id, config.viewers_configs[i].width,
-               config.viewers_configs[i].height, config.viewers_configs[i].x,
-               config.viewers_configs[i].y);
-    }
-
-    viewers_config_free_internals(&config);
+    struct viewers_config_t valid_config;
+    assert(viewers_config_from_file(&valid_config,
+                                    "tests/assets/valid_viewers.config") == 0);
+    viewers_config_free_internals(&valid_config);
 }

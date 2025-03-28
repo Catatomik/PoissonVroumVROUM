@@ -27,13 +27,6 @@ void add_viewer_config(struct viewers_config_t *config, int id, int x, int y,
     config->viewers_configs[config_index].height = height;
 }
 
-// Example viewers.config:
-//
-// {aquarium_width} x {aquarium_height}
-// N1 {width}x{height}+{x}+{y}
-// N2 {width}x{height}+{x}+{y}
-// N3 {width}x{height}+{x}+{y}
-// N4 {width}x{height}+{x}+{y}
 int viewers_config_from_file(struct viewers_config_t *config,
                              const char *viewers_config_path) {
     config->viewers_configs = NULL;
@@ -53,7 +46,12 @@ int viewers_config_from_file(struct viewers_config_t *config,
         buffer[strcspn(buffer, "\n")] = 0;
         if (i == 0) {
             // header is "{aquarium_width} x {aquarium_height}"
-            sscanf(buffer, "%d x %d", &config->width, &config->height);
+            int ret =
+                sscanf(buffer, "%d x %d", &config->width, &config->height);
+            if (ret < 2) // less than two elements matched
+                return -2;
+            if (ret == EOF)
+                return EOF;
         } else {
             if (buffer[0] != 'N') {
                 return 1; // Invalid format, viewers should be in the format
@@ -62,8 +60,12 @@ int viewers_config_from_file(struct viewers_config_t *config,
             int viewer_id;
             int x, y;
             int width, height;
-            sscanf(buffer, "N%d %dx%d+%d+%d", &viewer_id, &x, &y, &width,
-                   &height);
+            int ret = sscanf(buffer, "N%d %dx%d+%d+%d", &viewer_id, &x, &y,
+                             &width, &height);
+            if (ret < 5) // less than 5 elements matched
+                return i;
+            if (ret == EOF)
+                return EOF;
             add_viewer_config(config, viewer_id, width, height, x, y);
         }
         i++;

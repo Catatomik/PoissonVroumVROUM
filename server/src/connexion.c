@@ -80,7 +80,7 @@ void *start(void *config)
     int sockfd, newsockfd;
     struct sockaddr_in serv_addr, cli_addr;
 
-    sockfd = config_socket((struct config_t *)config->controller_port, "127.0.0.1", &serv_addr);
+    sockfd = config_socket(((struct config_t *)config)->controller_port, "127.0.0.1", &serv_addr);
     int clilen = (sizeof(cli_addr));
   
     // Add infinite loop to keep server running and accept new connections
@@ -111,7 +111,7 @@ void *start(void *config)
 	  }     
       }
       else{
-	sleep(0.3);
+	usleep(0.3);
       }
     
       // not pthread_join because we don't wait the end of thread (parallize)

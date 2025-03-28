@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "parse_cfg.h"
+#include "connexion.h"
 
 pthread_mutex_t mutex;
 
@@ -24,6 +24,7 @@ void error(char *msg)
     perror(msg);
     exit(1);
 }
+
 int config_socket(int portno, const char *ip_addr,struct sockaddr_in *serv_addr){
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   
@@ -69,17 +70,9 @@ void *thread_function_client(void *args)
 }
 
 
-int main(int argc, char *argv[])
+void *start(void *config)
 {
-  //init config structur of controller configuration file
-  struct config_t config;
-  if (config_from_file(&config, "../controller.cfg")){
-    const char *controller_addr = "127.0.0.1";
-    int controller_port = config.controller_port;    
-    //int display_timeout_value = config.display_timeout_value;
-    //int fish_update_interval = config.fish_update_interval;
-
-
+  
     int nb_thread_used = 0;
     pthread_t thread_client;
     pthread_mutex_init(&mutex, NULL); // Initialisation du mutex
@@ -87,7 +80,7 @@ int main(int argc, char *argv[])
     int sockfd, newsockfd;
     struct sockaddr_in serv_addr, cli_addr;
 
-    sockfd = config_socket(controller_port, controller_addr, &serv_addr);
+    sockfd = config_socket((struct config_t *)config->controller_port, "127.0.0.1", &serv_addr);
     int clilen = (sizeof(cli_addr));
   
     // Add infinite loop to keep server running and accept new connections
@@ -126,10 +119,7 @@ int main(int argc, char *argv[])
     }
   
     pthread_mutex_destroy(&mutex);
-    return 0;
-  }
-  else{
-    printf("Error while parsing config file");
-    return -1;
-  }
+    return NULL;
+  
+  
 }

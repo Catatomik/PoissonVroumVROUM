@@ -1,25 +1,25 @@
+use std::collections::HashMap;
 use std::fmt;
-use std::path::PathBuf;
-use std::net::Ipv4Addr;
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::collections::HashMap;
+use std::net::Ipv4Addr;
+use std::path::PathBuf;
 
 use std::ffi::OsStr;
 
 pub struct Config {
     controller_address: Ipv4Addr,
     id: String,
-    controller_port: u32,
+    controller_port: u16,
     display_timeout_value: u32,
-    resources: PathBuf
+    resources: PathBuf,
 }
 
 impl Config {
-    pub fn new(config_path:PathBuf) -> Result<Config, String> {
+    pub fn new(config_path: &PathBuf) -> Result<Config, String> {
         let mut config_map = HashMap::new();
 
-        let file = File::open(config_path).map_err(|_|"can't open the file".to_string())?;
+        let file = File::open(config_path).map_err(|_| "can't open the file".to_string())?;
         let lines = io::BufReader::new(file).lines();
 
         for line in lines.map_while(Result::ok) {
@@ -31,28 +31,26 @@ impl Config {
             }
         }
 
-        Ok ( 
-            Config {
-                controller_address: (hasmap_get(&config_map, "controller-address")?
-                                                .parse::<Ipv4Addr>()
-                                                .map_err(|_|"controller-address has to be an X.X.X.X with X between 0 and 255")?),
-                id: (hasmap_get(&config_map, "id")?),
-                controller_port: (hasmap_get(&config_map, "controller-port")?
-                                                .parse::<u32>()
-                                                .map_err(|_|"controller-port has to be an Interger")?), 
-                display_timeout_value: (hasmap_get(&config_map, "display-timeout-value")?
-                                                .parse::<u32>()
-                                                .map_err(|_|"display-timeout-value has to be an Interger")?), 
-                resources: (PathBuf::from(hasmap_get(&config_map, "resources")?))
-            }
-        )
+        Ok(Config {
+            controller_address: (hasmap_get(&config_map, "controller-address")?
+                .parse::<Ipv4Addr>()
+                .map_err(|_| "controller-address has to be an X.X.X.X with X between 0 and 255")?),
+            id: (hasmap_get(&config_map, "id")?),
+            controller_port: (hasmap_get(&config_map, "controller-port")?
+                .parse::<u16>()
+                .map_err(|_| "controller-port has to be an Interger")?),
+            display_timeout_value: (hasmap_get(&config_map, "display-timeout-value")?
+                .parse::<u32>()
+                .map_err(|_| "display-timeout-value has to be an Interger")?),
+            resources: (PathBuf::from(hasmap_get(&config_map, "resources")?)),
+        })
     }
 
     pub fn get_address(&self) -> Ipv4Addr {
         self.controller_address
     }
 
-    pub fn get_port(&self) -> u32 {
+    pub fn get_port(&self) -> u16 {
         self.controller_port
     }
 
@@ -75,13 +73,17 @@ impl fmt::Display for Config {
         writeln!(f, "Id: {}", self.get_id())?;
         writeln!(f, "Port: {}", self.get_port())?;
         writeln!(f, "Timeout: {}", self.get_timeout())?;
-        writeln!(f, "Resources name: {:?}", match self.get_resources().file_name() {
-            Some(name) => name,
-            None => OsStr::new("No file selected"),
-        })
+        writeln!(
+            f,
+            "Resources name: {:?}",
+            match self.get_resources().file_name() {
+                Some(name) => name,
+                None => OsStr::new("No file selected"),
+            }
+        )
     }
 }
 
-fn hasmap_get(map:&HashMap<String, String>, key:&str) -> Result<String, String> {
+fn hasmap_get(map: &HashMap<String, String>, key: &str) -> Result<String, String> {
     map.get(key).ok_or(format!("{key} miss")).cloned()
 }

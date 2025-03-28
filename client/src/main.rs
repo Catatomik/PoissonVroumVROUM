@@ -8,9 +8,8 @@ use config::Config;
 use network::{api::FishApi, protocol::ServerPacket, tcp::TcpClient};
 use repl::cli::command_loop;
 use std::{
-    net::{Ipv4Addr, SocketAddrV4},
+    net::SocketAddrV4,
     path::PathBuf,
-    str::FromStr as _,
     sync::{Arc, Mutex},
 };
 use view::entities;
@@ -47,10 +46,7 @@ fn main() {
     let fishes = Arc::new(Mutex::new(Vec::new()));
 
     let mut fish_api = FishApi::new(
-        TcpClient::new(SocketAddrV4::new(
-            Ipv4Addr::from_str("127.0.0.1").expect("Couldn't parse IPv4 address"),
-            12345,
-        )),
+        TcpClient::new(SocketAddrV4::new(config.get_address(), config.get_port())),
         {
             let mut fishes = fishes.clone();
             move |p| handle_packet(&mut fishes, p)

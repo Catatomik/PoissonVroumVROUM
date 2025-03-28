@@ -6,8 +6,8 @@ use std::str::FromStr;
 /// A server packet, i.e. a packet sent by a server following internal communication protocol
 #[derive(Debug)]
 pub enum ServerPacket {
-    /// < greeting <ID>
-    Greeting(Option<usize>),
+    /// < greeting <ID> <x> <y> <width> <height>
+    Greeting(usize, usize, usize, usize, usize),
     Pong,
     /// < no greeting
     /// Requested ID doesn't exist or is already affected

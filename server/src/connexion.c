@@ -37,6 +37,18 @@ int config_socket(int portno, const char *ip_addr,
     serv_addr->sin_family = AF_INET;
     serv_addr->sin_addr.s_addr = inet_addr(ip_addr);
     serv_addr->sin_port = htons(portno);
+
+    // Make the port reusable
+    int enabled = 1;
+    int rc;
+    rc = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&enabled,
+                    sizeof(enabled));
+    if (rc < 0) {
+        perror("setsockopt() failed");
+        close(sockfd);
+        exit(-1);
+    }
+
     if (bind(sockfd, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0)
         error("ERROR on binding");
     return sockfd;
@@ -49,12 +61,12 @@ void *thread_function_client(void *args) {
     int thread_id = client_args->thread_id;
 
     char buffer_read[256];
-    char buffer_write[256];
+    char buffer_write[512];
     int n;
 
     // Handles socket exchange
     bzero(buffer_read, 256);
-    bzero(buffer_write, 256);
+    bzero(buffer_write, 512);
 
     n = read(client_sockfd, buffer_read, 255);
     if (n < 0)
@@ -94,6 +106,7 @@ void *start(void *config) {
 
     sockfd = config_socket(((struct config_t *)config)->controller_port,
                            "127.0.0.1", &serv_addr);
+
     int clilen = (sizeof(cli_addr));
 
     // Add infinite loop to keep server running and accept new connections

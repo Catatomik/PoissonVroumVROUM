@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "connexion.h"
+#include "pong.h"
 
 pthread_mutex_t mutex;
 
@@ -47,18 +48,28 @@ void *thread_function_client(void *args) {
     int *nb_thread_used = client_args->nb_thread_used;
     int thread_id = client_args->thread_id;
 
-    char buffer[256];
+    char buffer_read[256];
+    char buffer_write[256];
     int n;
 
     // Handles socket exchange
-    bzero(buffer, 256);
+    bzero(buffer_read, 256);
+    bzero(buffer_write, 256);
 
-    n = read(client_sockfd, buffer, 255);
+    n = read(client_sockfd, buffer_read, 255);
     if (n < 0)
         error("ERROR reading from socket");
 
-    printf("The message from client %d: %s\n", thread_id, buffer);
-    n = write(client_sockfd, "I got your message", 18);
+    // printf("The message from client %d: %s\n", thread_id, buffer_read);
+    // n = write(client_sockfd, "I got your message", 18);
+
+    struct parse parsed = {};
+    for (int i = 0; i < 256; i++) {
+        parsed.argv[i] = malloc(sizeof(char) * 256);
+    }
+    printf("The message from client %d: %s\n", thread_id, buffer_read);
+    client_request(buffer_read, &parsed, buffer_write);
+    n = write(client_sockfd, buffer_write, sizeof(buffer_write));
     if (n < 0)
         error("ERROR writing to socket");
     close(client_sockfd);

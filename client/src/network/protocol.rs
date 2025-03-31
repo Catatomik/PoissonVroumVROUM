@@ -1,6 +1,6 @@
 //! Internal communication protocol
 
-use crate::view::entities;
+use crate::repl::cli;
 use std::str::FromStr;
 
 /// A server packet, i.e. a packet sent by a server following internal communication protocol
@@ -16,7 +16,7 @@ pub enum ServerPacket {
     /// - position to go to
     /// - size (hitbox)
     /// - time to move
-    FishesList(Vec<entities::Fish>),
+    FishesList(Vec<cli::Fish>),
     Ok,
     NOk,
     Bye,
@@ -55,10 +55,10 @@ pub enum ClientPacket {
     LsFishes(Option<usize>),
     /// Continuously ask for fishes
     GetFishesContinuously,
-    AddFish(entities::Fish),
-    DelFish,
+    AddFish(cli::Fish),
+    DelFish(String),
     /// VroumVROUM
-    StartFish,
+    StartFish(String),
     LogOut,
 }
 
@@ -66,6 +66,17 @@ impl ToString for ClientPacket {
     fn to_string(&self) -> String {
         match self {
             Self::Ping => String::from("ping"),
+            Self::AddFish(fish) => format!(
+                "addFish {} at {}x{},{}x{}, {}",
+                fish.name,
+                fish.position_x,
+                fish.position_y,
+                fish.lenght,
+                fish.height,
+                fish.behavior
+            ),
+            Self::DelFish(name) => format!("delFish {}", name),
+            Self::StartFish(name) => format!("startFish {}", name),
             _ => unimplemented!(),
         }
     }

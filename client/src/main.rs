@@ -56,6 +56,6 @@ fn main() {
     fish_api.ping();
 
     // Start loop of the app
-    command_loop();
+    command_loop(fish_api);
     // view::display::display();
 }

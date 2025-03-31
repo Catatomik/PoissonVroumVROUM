@@ -1,6 +1,7 @@
 //! General API to communicate trough a [transport] using [protocol]
 
 use super::protocol::{ClientPacket, ServerPacket, ServerPacketParsingError};
+use crate::repl::cli;
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -99,5 +100,23 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         self.request_tx
             .send(ClientPacket::Ping)
             .expect("Cannot send through transport thread channel");
+    }
+
+    pub fn add_fish(&mut self, fish: cli::Fish) -> () {
+        self.request_tx
+            .send(ClientPacket::AddFish(fish))
+            .expect("Cannot send fish")
+    }
+
+    pub fn del_fish(&mut self, name: String) -> () {
+        self.request_tx
+            .send(ClientPacket::DelFish(name))
+            .expect("Cannot delete fish")
+    }
+
+    pub fn start_fish(&mut self, name: String) -> () {
+        self.request_tx
+            .send(ClientPacket::StartFish(name))
+            .expect("Cannot delete fish")
     }
 }

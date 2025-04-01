@@ -69,7 +69,8 @@ void *thread_function_client(void *args) {
     char receive_buffer[RECEIVE_BUFFER_CAPACITY];
     char send_buffer[SEND_BUFFER_CAPACITY];
 
-    int n = read(client_sockfd, receive_buffer, RECEIVE_BUFFER_CAPACITY);
+    int n = read(client_sockfd, receive_buffer + receive_buffer_len,
+                 RECEIVE_BUFFER_CAPACITY - receive_buffer_len);
     if (n < 0)
         error("ERROR reading from socket");
     receive_buffer_len += n;

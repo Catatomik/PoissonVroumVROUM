@@ -3,8 +3,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -54,36 +56,37 @@ int config_socket(int portno, const char *ip_addr,
     return sockfd;
 }
 
+#define RECEIVE_BUFFER_CAPACITY 256
+#define SEND_BUFFER_CAPACITY 512
+
 void *thread_function_client(void *args) {
     threads_client_args_t *client_args = (threads_client_args_t *)args;
     int client_sockfd = client_args->client_sockfd;
     int *nb_thread_used = client_args->nb_thread_used;
     int thread_id = client_args->thread_id;
 
-    char buffer_read[256];
-    char buffer_write[512];
-    int n;
+    size_t receive_buffer_len = 0;
+    char receive_buffer[RECEIVE_BUFFER_CAPACITY];
+    char send_buffer[SEND_BUFFER_CAPACITY];
 
-    // Handles socket exchange
-    bzero(buffer_read, 256);
-    bzero(buffer_write, 512);
-
-    n = read(client_sockfd, buffer_read, 255);
+    int n = read(client_sockfd, receive_buffer, RECEIVE_BUFFER_CAPACITY);
     if (n < 0)
         error("ERROR reading from socket");
+    receive_buffer_len += n;
 
-    // printf("The message from client %d: %s\n", thread_id, buffer_read);
-    // n = write(client_sockfd, "I got your message", 18);
-
-    struct parse parsed = {};
-    for (int i = 0; i < 256; i++) {
-        parsed.argv[i] = malloc(sizeof(char) * 256);
+    if (strchr(receive_buffer, '\n') != NULL) {
+        // we have a full command
+        printf("The message from client %d: %s\n", thread_id, receive_buffer);
+        if (handle_client_request(receive_buffer, receive_buffer_len,
+                                  send_buffer, SEND_BUFFER_CAPACITY)) {
+            // some error happened
+        }
+        if (strlen(send_buffer) != 0) {
+            n = write(client_sockfd, send_buffer, sizeof(send_buffer));
+            if (n < 0)
+                error("ERROR writing to socket");
+        }
     }
-    printf("The message from client %d: %s\n", thread_id, buffer_read);
-    client_request(buffer_read, &parsed, buffer_write);
-    n = write(client_sockfd, buffer_write, sizeof(buffer_write));
-    if (n < 0)
-        error("ERROR writing to socket");
     close(client_sockfd);
 
     // mark this thread as free to deal with another sockfd

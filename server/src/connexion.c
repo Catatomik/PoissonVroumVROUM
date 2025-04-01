@@ -81,6 +81,9 @@ void *thread_function_client(void *args) {
         if (handle_client_request(receive_buffer, receive_buffer_len,
                                   send_buffer, SEND_BUFFER_CAPACITY)) {
             // some error happened
+            // TODO: handle it ?
+        } else {
+            receive_buffer_len = 0;
         }
         if (strlen(send_buffer) != 0) {
             n = write(client_sockfd, send_buffer, sizeof(send_buffer));

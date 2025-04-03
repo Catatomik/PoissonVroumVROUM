@@ -66,27 +66,33 @@ void *thread_function_client(void *args) {
     int thread_id = client_args->thread_id;
 
     size_t receive_buffer_len = 0;
-    char receive_buffer[RECEIVE_BUFFER_CAPACITY];
-    char send_buffer[SEND_BUFFER_CAPACITY];
+    char receive_buffer[RECEIVE_BUFFER_CAPACITY] = {0};
+    char send_buffer[SEND_BUFFER_CAPACITY] = {0};
 
     int n = read(client_sockfd, receive_buffer + receive_buffer_len,
-                 RECEIVE_BUFFER_CAPACITY - receive_buffer_len);
-    if (n < 0)
+                 RECEIVE_BUFFER_CAPACITY - receive_buffer_len-1);
+    if (n < 0){
         error("ERROR reading from socket");
+	close(client_sockfd);
+        return NULL;
+    }
     receive_buffer_len += n;
+    receive_buffer[receive_buffer_len] = '\0';
 
     if (strchr(receive_buffer, '\n') != NULL) {
         // we have a full command
         printf("The message from client %d: %s\n", thread_id, receive_buffer);
+	memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
         if (handle_client_request(receive_buffer, receive_buffer_len,
                                   send_buffer, SEND_BUFFER_CAPACITY)) {
-            // some error happened
+            fprintf(stderr, "Error handling client request\n");
             // TODO: handle it ?
         } else {
             receive_buffer_len = 0;
         }
-        if (strlen(send_buffer) != 0) {
-            n = write(client_sockfd, send_buffer, sizeof(send_buffer));
+	size_t send_length = strnlen(send_buffer, SEND_BUFFER_CAPACITY);
+        if (send_length > 0) {
+            n = write(client_sockfd, send_buffer, send_length);
             if (n < 0)
                 error("ERROR writing to socket");
         }

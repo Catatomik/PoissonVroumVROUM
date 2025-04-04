@@ -41,7 +41,7 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
     (*assigned_config)->is_in_use = true;
 
     int printed_count = snprintf(
-        send_buffer, send_buffer_capacity, "greting N%d %dx%d+%d+%d\n",
+        send_buffer, send_buffer_capacity, "greeting N%d %dx%d+%d+%d\n",
         (*assigned_config)->id, (*assigned_config)->x, (*assigned_config)->y,
         (*assigned_config)->width, (*assigned_config)->height);
     if (printed_count > send_buffer_capacity) {

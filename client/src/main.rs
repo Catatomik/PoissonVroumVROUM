@@ -11,6 +11,7 @@ use std::{
     net::SocketAddrV4,
     path::PathBuf,
     sync::{Arc, Mutex},
+    thread,
 };
 use view::entities;
 
@@ -53,9 +54,12 @@ fn main() {
         },
     );
 
-    fish_api.ping();
+    // Temp ping to check API connection
+    fish_api.ping().unwrap();
+
+    // Start display
+    thread::spawn(|| view::display::display(viewer_config));
 
     // Start loop of the app
     command_loop();
-    // view::display::display();
 }

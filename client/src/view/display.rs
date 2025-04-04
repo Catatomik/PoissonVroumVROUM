@@ -62,21 +62,23 @@ pub fn display(new_fish_list: &mut Vec<Fish>) {
 //calculate the new position of the fish
 fn find_right_position(current_fish: &mut Fish, new_fish: &mut Fish, dt: f32) {
     let now = Instant::now();
-
-    let time_remain = new_fish.timestamp.duration_since(now);
-    let duration = time_remain.as_secs_f64() * 1.0;
     if (new_fish.timestamp <= now) {
         current_fish.target_x = new_fish.target_x;
         current_fish.target_y = new_fish.target_y;
     } else {
-        let v_x = (new_fish.target_x - current_fish.target_x) as f64 / duration;
-        let v_y = (new_fish.target_y - current_fish.target_y) as f64 / duration;
+        let time_remain = new_fish.timestamp.duration_since(now);
+        let duration = time_remain.as_secs_f64() * 1.0;
+        if (new_fish.timestamp <= now) {
+        } else {
+            let v_x = (new_fish.target_x - current_fish.target_x) as f64 / duration;
+            let v_y = (new_fish.target_y - current_fish.target_y) as f64 / duration;
 
-        let x = current_fish.target_x as f64 + v_x * dt as f64;
-        let y = current_fish.target_y as f64 + v_y * dt as f64;
+            let x = current_fish.target_x as f64 + v_x * dt as f64;
+            let y = current_fish.target_y as f64 + v_y * dt as f64;
 
-        current_fish.target_x = x as f32;
-        current_fish.target_y = y as f32;
+            current_fish.target_x = x as f32;
+            current_fish.target_y = y as f32;
+        }
     }
 }
 

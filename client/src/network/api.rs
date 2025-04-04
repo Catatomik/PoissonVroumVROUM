@@ -55,8 +55,8 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         let (response_tx, response_rx) = channel::<CommandResult>();
 
         // Handshake, blocking
-        request_tx
-            .send(ClientPacket::Hello(None))
+        transport
+            .try_send(ClientPacket::Hello(None))
             .expect("Unable to send hello");
         // Wait for greeting from servers
         loop {

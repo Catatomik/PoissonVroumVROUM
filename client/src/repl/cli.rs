@@ -24,10 +24,23 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
         };
 
         match main_command {
-            "status" => status(),
-            "help" => help(),
+            "status" => {
+                if let None = command_parts.next() {
+                    status();
+                } else {
+                    println!("Usage: status");
+                }
+            }
+            "help" => {
+                if let None = command_parts.next() {
+                    help();
+                } else {
+                    println!("Usage: help");
+                }
+            }
             "addFish" => {
-                if let (Some(name), Some("at"), Some(position), Some(size), Some(behavior)) = (
+                if let (Some(name), Some("at"), Some(position), Some(size), Some(behavior), None) = (
+                    command_parts.next(),
                     command_parts.next(),
                     command_parts.next(),
                     command_parts.next(),
@@ -80,24 +93,29 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
                 }
             }
             "delFish" => {
-                if let Some(name) = command_parts.next() {
+                if let (Some(name), None) = (command_parts.next(), command_parts.next()) {
                     del_fish(&mut api_fish, name);
                 } else {
                     println!("Usage: delFish <name>");
                 }
             }
             "startFish" => {
-                if let Some(name) = command_parts.next() {
+                if let (Some(name), None) = (command_parts.next(), command_parts.next()) {
                     start_fish(&mut api_fish, name);
                 } else {
                     println!("Usage: startFish <name>");
                 }
             }
-            "quit" => break,
-            "ping" => ping(&mut api_fish),
+            "quit" => {
+                if let None = command_parts.next() {
+                    break;
+                } else {
+                    println!("Usage: quit");
+                }
+            }
             _ => {
                 println!("Invalid command !");
-                println!("use help");
+                println!("Please use '$ help'");
             }
         }
     }
@@ -123,7 +141,7 @@ fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     name: &str,
     x: u32,
     y: u32,
-    lenght: u32,
+    length: u32,
     height: u32,
     behavior: &str,
 ) {
@@ -131,16 +149,16 @@ fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
         name: String::from(name),
         position_x: x,
         position_y: y,
-        lenght: lenght,
-        height: height,
+        length,
+        height,
         behavior: String::from(behavior),
     };
     match fish_api.add_fish(new_fish) {
         Ok(res) => println!("    => {}", res.to_string()),
         Err(FishApiError::ResponseError(_)) => {
-            eprintln!("Error while getting response for addFish requeste")
+            eprintln!("Error while getting response for addFish request")
         }
-        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending addFish requeste"),
+        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending addFish request"),
     }
 }
 
@@ -151,9 +169,9 @@ fn del_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     match fish_api.del_fish(String::from(name)) {
         Ok(res) => println!("    => {}", res.to_string()),
         Err(FishApiError::ResponseError(_)) => {
-            eprintln!("Error while getting response for delFish requeste")
+            eprintln!("Error while getting response for delFish request")
         }
-        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending delFish requeste"),
+        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending delFish request"),
     }
 }
 
@@ -164,12 +182,8 @@ fn start_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     match fish_api.start_fish(String::from(name)) {
         Ok(res) => println!("    => {}", res.to_string()),
         Err(FishApiError::ResponseError(_)) => {
-            eprintln!("Error while getting response for startFish requeste")
+            eprintln!("Error while getting response for startFish request")
         }
-        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending startFish requeste"),
+        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending startFish request"),
     }
-}
-
-fn ping<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(fish_api: &mut FishApi<T>) {
-    fish_api.ping();
 }

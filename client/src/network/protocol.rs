@@ -72,7 +72,7 @@ impl ToString for ClientPacket {
                 fish.name,
                 fish.position_x,
                 fish.position_y,
-                fish.lenght,
+                fish.length,
                 fish.height,
                 fish.behavior
             ),
@@ -88,7 +88,7 @@ pub struct Fish {
     pub name: String,
     pub position_x: u32,
     pub position_y: u32,
-    pub lenght: u32,
+    pub length: u32,
     pub height: u32,
     pub behavior: String,
 }

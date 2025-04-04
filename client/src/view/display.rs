@@ -90,7 +90,7 @@ fn find_right_texture<'a>(
     map_fish_texture: &'a HashMap<String, Texture2D>,
     default: &'a Texture2D,
 ) -> &'a Texture2D {
-    let name = name_fish.split('_').next().unwrap_or("default");
-    let fish_path = format!("{}.png", name);
+    let name_f = name_fish.split('_').next().unwrap_or("default");
+    let fish_path = format!("{}.png", name_f);
     map_fish_texture.get(&fish_path).unwrap_or(default)
 }

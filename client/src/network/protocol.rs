@@ -39,21 +39,21 @@ impl FromStr for ServerPacket {
         match first_word {
             "pong" => Ok(ServerPacket::Pong),
             "greeting" => {
-                let packet_parts_plus = packet_parts.clone().flat_map(|s| s.split('+'));
+                let packet_parts_plus = packet_parts.flat_map(|s| s.split('+'));
                 if packet_parts_plus.clone().count() != 4 {
-                    Err(InvalidFormat)?
+                    Err(InvalidFormat)?;
                 };
-                let packet_parts_x = packet_parts_plus.flat_map(|s| s.split('x'));
-                if packet_parts_x.clone().count() != 6 {
-                    Err(InvalidFormat)?
+                let mut packet_parts_x = packet_parts_plus.flat_map(|s| s.split('x'));
+                if packet_parts_x.clone().count() != 5 {
+                    Err(InvalidFormat)?;
                 };
                 if let (Some(id), Some(x), Some(y), Some(w), Some(h), None) = (
-                    packet_parts.next(),
-                    packet_parts.next(),
-                    packet_parts.next(),
-                    packet_parts.next(),
-                    packet_parts.next(),
-                    packet_parts.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
                 ) {
                     Ok(ServerPacket::Greeting(
                         id.strip_prefix("N")

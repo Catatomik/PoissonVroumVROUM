@@ -11,7 +11,7 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
              size_t args_len, char *send_buffer, size_t send_buffer_capacity) {
     int requested_id;
     int matched_count = sscanf(args, "in as N%d\n", &requested_id);
-    if (matched_count < 1) {
+    if (matched_count < 1 && (args[0] == '\0' || args[0] == '\n')) {
         // no id precised, assign first free viewer id
         for (int i = 0; i < viewers_config.viewers_count; i++) {
             if (!viewers_config.viewers_configs[i].is_in_use) {
@@ -21,7 +21,7 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
                 break;
             }
         }
-    } else {
+    } else if (matched_count == 1) {
         // if an id is specified, search it in the viewers config array
         for (int i = 0; i < viewers_config.viewers_count; i++) {
             if (viewers_config.viewers_configs[i].id == requested_id) {
@@ -29,8 +29,11 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
                 break;
             }
         }
+    } else {
+        fprintf(stderr, "[WARN] client tried conecting with 'hello %s'\n",
+                args);
     }
-    if (assigned_config == NULL) {
+    if (*assigned_config == NULL) {
         snprintf(send_buffer, send_buffer_capacity, "no greeting\n");
         return 0;
     }

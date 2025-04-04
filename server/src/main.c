@@ -16,21 +16,20 @@ int main(int argc, char **argv) {
     // TODO: parse configs
     pthread_t thread_connexion;
 
-    if (config_from_file(&config, "./controller.cfg") == 0 &&
-        viewers_config_from_file(&viewers_config, "./viewers.config") == 0) {
-
-        // const char *controller_addr = "127.0.0.1";
-        // int controller_port = config.controller_port;
-        // int display_timeout_value = config.display_timeout_value;
-        // int fish_update_interval = config.fish_update_interval;
-
-        pthread_create(&thread_connexion, NULL, start, NULL);
-        pthread_detach(thread_connexion);
-        while (1) {
-        }
-    } else {
-        printf("Error while parsing configs files");
+    if (config_from_file(&config, "./controller.cfg") != 0) {
+        printf("Error while parsing controller.cfg");
         return -1;
+    }
+    if (viewers_config_from_file(&viewers_config, "./viewers.config") != 0) {
+        printf("Error while parsing viewers.config");
+        return -1;
+    }
+
+    pthread_create(&thread_connexion, NULL, start, NULL);
+    pthread_detach(thread_connexion);
+
+    // CLI
+    while (1) {
     }
 
     printf("Hello, World!\n");

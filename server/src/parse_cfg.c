@@ -20,7 +20,6 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
 
     char buffer[MAX_LEN];
     while (fgets(buffer, MAX_LEN, fp)) {
-        // fprintf(stderr, "'%s'", buffer);
         // Remove trailing newline
         buffer[strcspn(buffer, "\n")] = 0;
         char *first_equal_pos = strchr(buffer, '=');

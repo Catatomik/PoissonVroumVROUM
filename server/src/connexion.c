@@ -104,12 +104,15 @@ void *thread_function_client(void *args) {
 
     // close client
     close(client_sockfd);
-    viewer_config->is_in_use = false;
+    if (viewer_config) {
+        viewer_config->is_in_use = false;
+    }
     free(client_args);
     // mark this thread as free to deal with another sockfd
     pthread_mutex_lock(&mutex);
     *nb_thread_used -= 1;
     pthread_mutex_unlock(&mutex);
+    printf("[INFO] client %d disconnected", thread_id);
     return NULL;
 }
 
@@ -125,6 +128,8 @@ void *start(void *_) {
     struct sockaddr_in serv_addr, cli_addr;
 
     sockfd = config_socket(config.controller_port, "127.0.0.1", &serv_addr);
+    printf("[INFO] server started! Listening to connections on port %d\n",
+           config.controller_port);
 
     // Add infinite loop to keep server running and accept new connections
     while (1) {

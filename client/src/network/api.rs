@@ -61,7 +61,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         // Wait for greeting from servers
         loop {
             match transport.try_receive() {
-                Ok(Some(p @ ServerPacket::Greeting(_))) => {
+                Ok(Some(p @ ServerPacket::Greeting(..))) => {
                     // Got greeting!
                     // Pass it to the handler if it wants to treat it further
                     response_handler(p);

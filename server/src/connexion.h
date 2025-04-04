@@ -1,10 +1,6 @@
 #ifndef __CONNEXION_H__
 #define __CONNEXION_H__
 
-#include "config.h"
-#include "parse_cfg.h"
-#include "parse_viewers_config.h"
-
 void error(char *msg);
 
 void *start(void *config);

@@ -1,5 +1,10 @@
 /* A simple server in the internet domain using TCP
    The port number is passed as an argument */
+#include "connexion.h"
+#include "config.h"
+#include "handlers.h"
+#include "parse_cfg.h"
+#include "parse_viewers_config.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -11,10 +16,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "connexion.h"
-#include "parse_viewers_config.h"
-#include "pong.h"
 
 pthread_mutex_t mutex;
 

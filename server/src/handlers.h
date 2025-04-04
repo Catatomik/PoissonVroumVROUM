@@ -1,7 +1,6 @@
-#ifndef __PONG_H__
-#define __PONG_H__
+#ifndef __HANDLERS_H__
+#define __HANDLERS_H__
 
-#include "config.h"
 #include "parse_viewers_config.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -15,4 +14,4 @@ int handle_client_request(struct viewer_config_t **viewer_config,
                           char *receive_buffer, size_t receive_buffer_len,
                           char *send_buffer, size_t send_buffer_capacity);
 
-#endif //__PONG_H__
+#endif //__HANDLERS_H__

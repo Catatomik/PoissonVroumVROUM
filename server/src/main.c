@@ -1,11 +1,10 @@
+#include "connexion.h"
+#include "parse_cfg.h"
+#include "parse_viewers_config.h"
 #include "utils.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "connexion.h"
-#include "parse_cfg.h"
-#include "parse_viewers_config.h"
 
 struct viewers_config_t viewers_config;
 struct config_t config;

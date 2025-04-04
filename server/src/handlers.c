@@ -1,9 +1,9 @@
+#include "handlers.h"
+#include "config.h"
+#include "parse_viewers_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "parse_viewers_config.h"
-#include "pong.h"
 
 // > hello in as N3
 // < greeting N3 0x500+500+500

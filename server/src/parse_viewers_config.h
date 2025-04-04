@@ -1,6 +1,8 @@
 #ifndef _PARSE_VIEWERS_CONFIG_H_
 #define _PARSE_VIEWERS_CONFIG_H_
 
+#include <stdbool.h>
+
 // config of an aquarium
 struct viewers_config_t {
     int width;                               // width of the aquarium
@@ -11,11 +13,12 @@ struct viewers_config_t {
 
 // description of a viewer's config
 struct viewer_config_t {
-    int id;     // id of the viewer
-    int x;      // x location of the viewer window in the aquarium
-    int y;      // y location of the viewer window in the aquarium
-    int width;  // width of the viewer window
-    int height; // height of the viewer window
+    int id;         // id of the viewer
+    int x;          // x location of the viewer window in the aquarium
+    int y;          // y location of the viewer window in the aquarium
+    int width;      // width of the viewer window
+    int height;     // height of the viewer window
+    bool is_in_use; // if the config is currently in use
 };
 
 // parses a viewers config file at given path and assigns the parsed values to

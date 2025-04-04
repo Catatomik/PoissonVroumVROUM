@@ -1,5 +1,9 @@
 #include "parse_viewers_config.h"
+#include "parse_cfg.h"
 #include <assert.h>
+
+struct viewers_config_t viewers_config;
+struct config_t config;
 
 int main() {
     struct viewers_config_t invalid_config;

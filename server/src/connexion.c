@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "connexion.h"
+#include "parse_viewers_config.h"
 #include "pong.h"
 
 pthread_mutex_t mutex;
@@ -106,8 +107,8 @@ void *thread_function_client(void *args) {
     return NULL;
 }
 
-void *start(void *config) {
-
+int cli_addr_len = sizeof(struct sockaddr_in);
+void *start(void *_) {
     int next_id = 0;
     int thread_id;
     int nb_thread_used = 0;
@@ -117,16 +118,13 @@ void *start(void *config) {
     int sockfd, newsockfd;
     struct sockaddr_in serv_addr, cli_addr;
 
-    sockfd = config_socket(((struct config_t *)config)->controller_port,
-                           "127.0.0.1", &serv_addr);
-
-    int clilen = (sizeof(cli_addr));
+    sockfd = config_socket(config.controller_port, "127.0.0.1", &serv_addr);
 
     // Add infinite loop to keep server running and accept new connections
     while (1) {
         listen(sockfd, 5);
         newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr,
-                           (unsigned int *restrict)&clilen);
+                           (unsigned int *)&cli_addr_len);
         if (newsockfd < 0)
             error("ERROR on accept");
 

@@ -2,58 +2,47 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "main.h"
+#include "parse_viewers_config.h"
 #include "pong.h"
 
+// > hello in as N3
+// < greeting N3 0x500+500+500
 int greeting(char *args, size_t args_len, char *send_buffer,
              size_t send_buffer_capacity) {
-    // extract id of the viewers
-    char *id = malloc(6 * sizeof(char));
-    if (id == NULL) {
-        printf("Error allocation memory\n");
-        return 1;
-    }
-    char *conf;
-    char *start_char_id = strchr(args, 'N');
-
-    // no id precised
-    if (start_char_id == NULL) {
-        memcpy(id, "N2", 2);
-        id[2] = '\0';
-        conf = "500x0+500+500";
+    int requested_id;
+    int matched_count = sscanf(args, "in as N%d\n", &requested_id);
+    struct viewer_config_t *assigned_config = NULL;
+    if (matched_count < 1) {
+        // no id precised, assign first free viewer id
+        for (int i = 0; i < viewers_config.viewers_count; i++) {
+            if (!viewers_config.viewers_configs[i].is_in_use) {
+                assigned_config = &viewers_config.viewers_configs[i];
+                printf("no id provided, assigning id N%d\n",
+                       assigned_config->id);
+                break;
+            }
+        }
     } else {
-        int start_index_id = start_char_id - args;
-        int end_index_id = start_index_id + 1;
-        while (args[end_index_id] == '1' || args[end_index_id] == '2' ||
-               args[end_index_id] == '3' || args[end_index_id] == '4' ||
-               args[end_index_id] == '5' || args[end_index_id] == '6' ||
-               args[end_index_id] == '7' || args[end_index_id] == '8' ||
-               args[end_index_id] == '9' || args[end_index_id] == '0') {
-            end_index_id += 1;
-        }
-        end_index_id -= start_index_id;
-        memcpy(id, args + start_index_id, end_index_id);
-        id[end_index_id] = '\0';
-
-        // give them settings
-        if (strncmp(id, "N1", 2) == 0)
-            conf = "0x0+500+500";
-        else if (strncmp(id, "N2", 2) == 0)
-            conf = "500x0+500+500";
-        else if (strncmp(id, "N3", 2) == 0)
-            conf = "0x500+500+500";
-        else if (strncmp(id, "N4", 2) == 0)
-            conf = "500x500+500+500";
-        else {
-            snprintf(send_buffer, send_buffer_capacity, "no greeting\n");
-            free(id);
-            return 0;
+        // if an id is specified, search it in the viewers config array
+        for (int i = 0; i < viewers_config.viewers_count; i++) {
+            if (viewers_config.viewers_configs[i].id == requested_id) {
+                assigned_config = &viewers_config.viewers_configs[i];
+                break;
+            }
         }
     }
+    if (assigned_config == NULL) {
+        snprintf(send_buffer, send_buffer_capacity, "no greeting\n");
+        return 0;
+    }
 
-    // greeting
-    int printed_count = snprintf(send_buffer, send_buffer_capacity,
-                                 "greting %s %s\n", id, conf);
-    free(id);
+    assigned_config->is_in_use = true;
+
+    int printed_count =
+        snprintf(send_buffer, send_buffer_capacity, "greting N%d %dx%d+%d+%d\n",
+                 assigned_config->id, assigned_config->x, assigned_config->y,
+                 assigned_config->width, assigned_config->height);
     if (printed_count > send_buffer_capacity) {
         fprintf(
             stderr,
@@ -115,8 +104,8 @@ int handle_client_request(char *receive_buffer, size_t receive_buffer_len,
     /* if (strncmp(receive_buffer, "help", 4) == 0) { */
     /*   return help(parsed, server_response); */
     /* } */
-    if (strncmp(receive_buffer, "hello", 4) == 0) {
-        return greeting(receive_buffer + 5, receive_buffer_len, send_buffer,
+    if (strncmp(receive_buffer, "hello", 5) == 0) {
+        return greeting(receive_buffer + 6, receive_buffer_len, send_buffer,
                         send_buffer_capacity);
     }
     /* if (strncmp(receive_buffer, "getFish", 7) == 0) { */

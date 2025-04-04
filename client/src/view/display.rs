@@ -1,5 +1,9 @@
 use raylib::prelude::*;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::Mutex,
+    time::{Instant, SystemTime},
+};
 
 use super::entities::Fish;
 
@@ -20,6 +24,7 @@ pub fn display(new_fish_list: &mut Vec<Fish>) {
     let fish_names = ["fish1.png", "fish2.png", "default.png"];
 
     let mut map_fish_texture: HashMap<String, Texture2D> = HashMap::new();
+    let mut current_fish_list: HashMap<String, Fish> = HashMap::new();
 
     for &fish in &fish_names {
         let texture = rl
@@ -31,7 +36,7 @@ pub fn display(new_fish_list: &mut Vec<Fish>) {
         .load_texture(&thread, "assets/default.png")
         .expect(&format!("Impossible de charger le poisson : {}", "default"));
 
-    let bg_source = Rectangle::new(
+    let bg_source: Rectangle = Rectangle::new(
         0.0,
         0.0,
         bg_texture.width() as f32,
@@ -41,36 +46,64 @@ pub fn display(new_fish_list: &mut Vec<Fish>) {
     let origin = Vector2::new(0.0, 0.0);
 
     while !rl.window_should_close() {
+        let dt = rl.get_frame_time();
+        rl.set_target_fps(60);
         let mut d = rl.begin_drawing(&thread);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
-        for fish in new_fish_list.iter_mut() {
-            let texture = find_right_texture(
-                String::from(fish.name.clone()).to_string(),
-                &map_fish_texture,
-                &texture_default,
-            );
-            display_fish(
-                &mut d,
-                texture,
-                fish.target_x,
-                fish.target_y,
-                fish.size_w,
-                fish.size_w,
-                0.0,
-            );
+        find_next_current_positions(&mut current_fish_list, new_fish_list, dt);
+        for (name, fish) in current_fish_list.iter_mut() {
+            let texture = find_right_texture(name.clone(), &map_fish_texture, &texture_default);
+            display_fish(&mut d, texture, fish.clone(), 0.0);
         }
     }
 }
 
-fn display_fish(
-    d: &mut RaylibDrawHandle,
-    texture: &Texture2D,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-    rotation: f32,
+// function which takes the current version of the fish and the new version of the fish and the dt(delays of a frame)
+//calculate the new position of the fish
+fn find_right_position(current_fish: &mut Fish, new_fish: &mut Fish, dt: f32) {
+    let now = Instant::now();
+
+    let time_remain = new_fish.timestamp.duration_since(now);
+    let duration = time_remain.as_secs_f64() * 1.0;
+    if (new_fish.timestamp <= now) {
+        current_fish.target_x = new_fish.target_x;
+        current_fish.target_y = new_fish.target_y;
+    } else {
+        let v_x = (new_fish.target_x - current_fish.target_x) as f64 / duration;
+        let v_y = (new_fish.target_y - current_fish.target_y) as f64 / duration;
+
+        let x = current_fish.target_x as f64 + v_x * dt as f64;
+        let y = current_fish.target_y as f64 + v_y * dt as f64;
+
+        current_fish.target_x = x as f32;
+        current_fish.target_y = y as f32;
+    }
+}
+
+// function which takes the list of the current fishes and one of the new one and calculate the new current positions of the fishes
+fn find_next_current_positions(
+    current_fish_list: &mut HashMap<String, Fish>,
+    new_fish_list: &mut Vec<Fish>,
+    dt: f32,
 ) {
+    for new_fish in new_fish_list.iter_mut() {
+        //if fish is not in current_fish_list, add it
+        if !current_fish_list.contains_key(&new_fish.name) {
+            current_fish_list.insert(new_fish.name.clone(), new_fish.clone());
+        } else {
+            if let Some(current_fish) = current_fish_list.get_mut(&new_fish.name) {
+                find_right_position(current_fish, new_fish, dt);
+            }
+        }
+    }
+}
+
+//display a fish with a texture, a fish and the rotation
+fn display_fish(d: &mut RaylibDrawHandle, texture: &Texture2D, fish: Fish, rotation: f32) {
+    let x = fish.target_x;
+    let y = fish.target_y;
+    let h = fish.size_h;
+    let w = fish.size_w;
     let scale_x = w as f32 / texture.width() as f32;
     let scale_y = h as f32 / texture.height() as f32;
 

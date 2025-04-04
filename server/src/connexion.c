@@ -65,6 +65,7 @@ void *thread_function_client(void *args) {
     int client_sockfd = client_args->client_sockfd;
     int *nb_thread_used = client_args->nb_thread_used;
     int thread_id = client_args->thread_id;
+    struct viewer_config_t *viewer_config = NULL;
 
     size_t receive_buffer_len = 0;
     char receive_buffer[RECEIVE_BUFFER_CAPACITY] = {0};
@@ -84,8 +85,9 @@ void *thread_function_client(void *args) {
         // we have a full command
         printf("The message from client %d: %s\n", thread_id, receive_buffer);
         memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
-        if (handle_client_request(receive_buffer, receive_buffer_len,
-                                  send_buffer, SEND_BUFFER_CAPACITY)) {
+        if (handle_client_request(&viewer_config, receive_buffer,
+                                  receive_buffer_len, send_buffer,
+                                  SEND_BUFFER_CAPACITY)) {
             fprintf(stderr, "Error handling client request\n");
             // TODO: handle it ?
         } else {
@@ -98,8 +100,11 @@ void *thread_function_client(void *args) {
                 error("ERROR writing to socket");
         }
     }
-    close(client_sockfd);
 
+    // close client
+    close(client_sockfd);
+    viewer_config->is_in_use = false;
+    free(client_args);
     // mark this thread as free to deal with another sockfd
     pthread_mutex_lock(&mutex);
     *nb_thread_used -= 1;

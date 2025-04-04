@@ -2,24 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "main.h"
 #include "parse_viewers_config.h"
 #include "pong.h"
 
 // > hello in as N3
 // < greeting N3 0x500+500+500
-int greeting(char *args, size_t args_len, char *send_buffer,
-             size_t send_buffer_capacity) {
+int greeting(struct viewer_config_t **assigned_config, char *args,
+             size_t args_len, char *send_buffer, size_t send_buffer_capacity) {
     int requested_id;
     int matched_count = sscanf(args, "in as N%d\n", &requested_id);
-    struct viewer_config_t *assigned_config = NULL;
     if (matched_count < 1) {
         // no id precised, assign first free viewer id
         for (int i = 0; i < viewers_config.viewers_count; i++) {
             if (!viewers_config.viewers_configs[i].is_in_use) {
-                assigned_config = &viewers_config.viewers_configs[i];
+                *assigned_config = &viewers_config.viewers_configs[i];
                 printf("no id provided, assigning id N%d\n",
-                       assigned_config->id);
+                       (*assigned_config)->id);
                 break;
             }
         }
@@ -27,7 +25,7 @@ int greeting(char *args, size_t args_len, char *send_buffer,
         // if an id is specified, search it in the viewers config array
         for (int i = 0; i < viewers_config.viewers_count; i++) {
             if (viewers_config.viewers_configs[i].id == requested_id) {
-                assigned_config = &viewers_config.viewers_configs[i];
+                *assigned_config = &viewers_config.viewers_configs[i];
                 break;
             }
         }
@@ -37,12 +35,12 @@ int greeting(char *args, size_t args_len, char *send_buffer,
         return 0;
     }
 
-    assigned_config->is_in_use = true;
+    (*assigned_config)->is_in_use = true;
 
-    int printed_count =
-        snprintf(send_buffer, send_buffer_capacity, "greting N%d %dx%d+%d+%d\n",
-                 assigned_config->id, assigned_config->x, assigned_config->y,
-                 assigned_config->width, assigned_config->height);
+    int printed_count = snprintf(
+        send_buffer, send_buffer_capacity, "greting N%d %dx%d+%d+%d\n",
+        (*assigned_config)->id, (*assigned_config)->x, (*assigned_config)->y,
+        (*assigned_config)->width, (*assigned_config)->height);
     if (printed_count > send_buffer_capacity) {
         fprintf(
             stderr,
@@ -97,7 +95,8 @@ int pong(char *args, size_t args_len, char *send_buffer,
 //     strcpy(server_response, "not yet responseToStart");
 // }
 
-int handle_client_request(char *receive_buffer, size_t receive_buffer_len,
+int handle_client_request(struct viewer_config_t **viewer_config,
+                          char *receive_buffer, size_t receive_buffer_len,
                           char *send_buffer, size_t send_buffer_capacity) {
     // printf("%s\n", receive_buffer);
 
@@ -105,8 +104,8 @@ int handle_client_request(char *receive_buffer, size_t receive_buffer_len,
     /*   return help(parsed, server_response); */
     /* } */
     if (strncmp(receive_buffer, "hello", 5) == 0) {
-        return greeting(receive_buffer + 6, receive_buffer_len, send_buffer,
-                        send_buffer_capacity);
+        return greeting(viewer_config, receive_buffer + 6, receive_buffer_len,
+                        send_buffer, send_buffer_capacity);
     }
     /* if (strncmp(receive_buffer, "getFish", 7) == 0) { */
     /*   return list(receive_buffer + 8, receive_buffer_len, send_buffer, */

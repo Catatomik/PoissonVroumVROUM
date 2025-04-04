@@ -1,7 +1,7 @@
 use std::io;
 
-use crate::network::api::{FishApi, Transport};
-use crate::network::protocol::{ClientPacket, ServerPacket};
+use crate::network::api::{FishApi, FishApiError, Transport};
+use crate::network::protocol::{ClientPacket, Fish, ServerPacket};
 
 pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     mut api_fish: FishApi<T>,
@@ -50,23 +50,23 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
                             }
                         };
                         if let Some((position_x, position_y)) = position.split_once('x') {
-                            let position_x = match position_x.parse::<u32>() {
-                                Ok(c) => c,
-                                Err(_) => {
-                                    println!("x position must be an integer");
-                                    continue;
-                                }
+                            let Ok(position_x) = position_x.parse::<u32>() else {
+                                println!("x position must be an integer");
+                                continue;
                             };
-                            let position_y = match position_y.parse::<u32>() {
-                                Ok(c) => c,
-                                Err(_) => {
-                                    println!("y position must be an integer");
-                                    continue;
-                                }
+                            let Ok(position_y) = position_y.parse::<u32>() else {
+                                println!("y position must be an integer");
+                                continue;
                             };
-                            api_fish.add_fish(add_fish(
-                                name, position_x, position_y, lenght, height, behavior,
-                            ));
+                            add_fish(
+                                &mut api_fish,
+                                name,
+                                position_x,
+                                position_y,
+                                lenght,
+                                height,
+                                behavior,
+                            );
                         } else {
                             println!("position should be like 10x10");
                             continue;
@@ -81,22 +81,20 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
             }
             "delFish" => {
                 if let Some(name) = command_parts.next() {
-                    api_fish.del_fish(String::from(name));
-                    del_fish(name);
+                    del_fish(&mut api_fish, name);
                 } else {
                     println!("Usage: delFish <name>");
                 }
             }
             "startFish" => {
                 if let Some(name) = command_parts.next() {
-                    api_fish.start_fish(String::from(name));
-                    start_fish(name);
+                    start_fish(&mut api_fish, name);
                 } else {
                     println!("Usage: startFish <name>");
                 }
             }
             "quit" => break,
-            "ping" => api_fish.ping(),
+            "ping" => ping(&mut api_fish),
             _ => {
                 println!("Invalid command !");
                 println!("use help");
@@ -120,34 +118,58 @@ fn status() {
     println!("Status controller");
 }
 
-fn add_fish(name: &str, x: u32, y: u32, lenght: u32, height: u32, behavior: &str) -> Fish {
-    println!(
-        "Add fish named {name} at {x}x{y} with size {lenght}x{height} and behavior {behavior}"
-    );
-    Fish {
+fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
+    fish_api: &mut FishApi<T>,
+    name: &str,
+    x: u32,
+    y: u32,
+    lenght: u32,
+    height: u32,
+    behavior: &str,
+) {
+    let new_fish = Fish {
         name: String::from(name),
         position_x: x,
         position_y: y,
         lenght: lenght,
         height: height,
         behavior: String::from(behavior),
+    };
+    match fish_api.add_fish(new_fish) {
+        Ok(res) => println!("    => {}", res.to_string()),
+        Err(FishApiError::ResponseError(_)) => {
+            eprintln!("Error while getting response for addFish requeste")
+        }
+        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending addFish requeste"),
     }
 }
 
-fn del_fish(name: &str) {
-    println!("Fish named {name} was deleted");
+fn del_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
+    fish_api: &mut FishApi<T>,
+    name: &str,
+) {
+    match fish_api.del_fish(String::from(name)) {
+        Ok(res) => println!("    => {}", res.to_string()),
+        Err(FishApiError::ResponseError(_)) => {
+            eprintln!("Error while getting response for delFish requeste")
+        }
+        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending delFish requeste"),
+    }
 }
 
-fn start_fish(name: &str) {
-    println!("Fish named {name} was VroumVroum");
+fn start_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
+    fish_api: &mut FishApi<T>,
+    name: &str,
+) {
+    match fish_api.start_fish(String::from(name)) {
+        Ok(res) => println!("    => {}", res.to_string()),
+        Err(FishApiError::ResponseError(_)) => {
+            eprintln!("Error while getting response for startFish requeste")
+        }
+        Err(FishApiError::RequestError(_)) => eprintln!("Error while sending startFish requeste"),
+    }
 }
 
-#[derive(Debug)]
-pub struct Fish {
-    pub name: String,
-    pub position_x: u32,
-    pub position_y: u32,
-    pub lenght: u32,
-    pub height: u32,
-    pub behavior: String,
+fn ping<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(fish_api: &mut FishApi<T>) {
+    fish_api.ping();
 }

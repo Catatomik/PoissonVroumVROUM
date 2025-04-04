@@ -1,6 +1,5 @@
 //! Internal communication protocol
 
-use crate::repl::cli;
 use std::str::FromStr;
 
 /// A server packet, i.e. a packet sent by a server following internal communication protocol
@@ -16,7 +15,7 @@ pub enum ServerPacket {
     /// - position to go to
     /// - size (hitbox)
     /// - time to move
-    FishesList(Vec<cli::Fish>),
+    FishesList(Vec<Fish>),
     Ok,
     NOk,
     Bye,
@@ -37,6 +36,8 @@ impl FromStr for ServerPacket {
         let first_word = raw_packet.split_whitespace().next().ok_or(InvalidFormat)?;
         match first_word {
             "pong" => Ok(ServerPacket::Pong),
+            "OK" => Ok(ServerPacket::Ok),
+            "NOK" => Ok(ServerPacket::NOk),
             other => Err(UnsupportedCommand(other.to_string())),
         }
     }
@@ -55,7 +56,7 @@ pub enum ClientPacket {
     LsFishes(Option<usize>),
     /// Continuously ask for fishes
     GetFishesContinuously,
-    AddFish(cli::Fish),
+    AddFish(Fish),
     DelFish(String),
     /// VroumVROUM
     StartFish(String),
@@ -65,9 +66,9 @@ pub enum ClientPacket {
 impl ToString for ClientPacket {
     fn to_string(&self) -> String {
         match self {
-            Self::Ping => String::from("ping"),
+            Self::Ping => String::from("ping\n"),
             Self::AddFish(fish) => format!(
-                "addFish {} at {}x{},{}x{}, {}",
+                "addFish {} at {}x{},{}x{}, {}\n",
                 fish.name,
                 fish.position_x,
                 fish.position_y,
@@ -75,9 +76,19 @@ impl ToString for ClientPacket {
                 fish.height,
                 fish.behavior
             ),
-            Self::DelFish(name) => format!("delFish {}", name),
-            Self::StartFish(name) => format!("startFish {}", name),
+            Self::DelFish(name) => format!("delFish {}\n", name),
+            Self::StartFish(name) => format!("startFish {}\n", name),
             _ => unimplemented!(),
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Fish {
+    pub name: String,
+    pub position_x: u32,
+    pub position_y: u32,
+    pub lenght: u32,
+    pub height: u32,
+    pub behavior: String,
 }

@@ -53,7 +53,7 @@ fn main() {
         },
     );
 
-    fish_api.ping();
+    // fish_api.ping();
 
     // Start loop of the app
     command_loop(fish_api);

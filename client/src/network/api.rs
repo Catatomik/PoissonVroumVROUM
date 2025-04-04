@@ -1,11 +1,10 @@
 //! General API to communicate trough a [transport] using [protocol]
 
-use super::protocol::{ClientPacket, ServerPacket, ServerPacketParsingError};
-use crate::repl::cli;
+use super::protocol::{ClientPacket, Fish, ServerPacket};
 use std::{
     fmt::Debug,
     marker::PhantomData,
-    sync::mpsc::{Receiver, Sender, TryRecvError, channel},
+    sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
     thread::{sleep, spawn},
     time::Duration,
 };
@@ -19,15 +18,23 @@ pub trait Transport<Req, Res> {
 }
 
 #[derive(Debug)]
-pub enum FishApiError<ReqE, ResE> {
-    RequestError(ReqE),
-    ResponseError(ResE),
-    ParsingError(ServerPacketParsingError),
+pub enum FishApiError {
+    RequestError(SendError<ClientPacket>),
+    ResponseError(RecvError),
 }
 
 pub enum CommandResult {
     Ok,
     NOk,
+}
+
+impl ToString for CommandResult {
+    fn to_string(&self) -> String {
+        match self {
+            CommandResult::Ok => String::from("OK"),
+            CommandResult::NOk => String::from("NOK"),
+        }
+    }
 }
 
 impl TryFrom<ServerPacket> for CommandResult {
@@ -102,21 +109,24 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             .expect("Cannot send through transport thread channel");
     }
 
-    pub fn add_fish(&mut self, fish: cli::Fish) -> () {
+    pub fn add_fish(&mut self, fish: Fish) -> Result<CommandResult, FishApiError> {
         self.request_tx
             .send(ClientPacket::AddFish(fish))
-            .expect("Cannot send fish")
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 
-    pub fn del_fish(&mut self, name: String) -> () {
+    pub fn del_fish(&mut self, name: String) -> Result<CommandResult, FishApiError> {
         self.request_tx
             .send(ClientPacket::DelFish(name))
-            .expect("Cannot delete fish")
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 
-    pub fn start_fish(&mut self, name: String) -> () {
+    pub fn start_fish(&mut self, name: String) -> Result<CommandResult, FishApiError> {
         self.request_tx
             .send(ClientPacket::StartFish(name))
-            .expect("Cannot delete fish")
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 }

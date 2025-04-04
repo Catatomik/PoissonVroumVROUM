@@ -54,6 +54,37 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         let (request_tx, request_rx) = channel::<ClientPacket>();
         let (response_tx, response_rx) = channel::<CommandResult>();
 
+        // Handshake, blocking
+        request_tx
+            .send(ClientPacket::Hello(None))
+            .expect("Unable to send hello");
+        // Wait for greeting from servers
+        loop {
+            match transport.try_receive() {
+                Ok(Some(p @ ServerPacket::Greeting(_))) => {
+                    // Got greeting!
+                    // Pass it to the handler if it wants to treat it further
+                    response_handler(p);
+                    // Continue initialization
+                    break;
+                }
+                Ok(Some(res)) => {
+                    eprintln!(
+                        "Expected greeting from server, got another response: {:?}",
+                        res
+                    );
+                }
+                Ok(None) => {
+                    // Got no response to read
+                }
+                Err(e) => {
+                    eprintln!("{:?}", e);
+                }
+            };
+
+            sleep(Duration::from_millis(100));
+        }
+
         spawn(move || {
             loop {
                 if let Some(req) = match request_rx.try_recv() {

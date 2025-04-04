@@ -40,6 +40,13 @@ impl TryFrom<ServerPacket> for CommandResult {
     }
 }
 
+pub struct ViewerConfig {
+    pub x: usize,
+    pub y: usize,
+    pub width: usize,
+    pub height: usize,
+}
+
 pub struct FishApi<T: Transport<ClientPacket, ServerPacket> + Send + 'static> {
     _p: PhantomData<T>,
     request_tx: Sender<ClientPacket>,
@@ -50,7 +57,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
     pub fn new<F: FnMut(ServerPacket) -> () + Send + 'static>(
         mut transport: T,
         mut response_handler: F,
-    ) -> Self {
+    ) -> (Self, ViewerConfig) {
         let (request_tx, request_rx) = channel::<ClientPacket>();
         let (response_tx, response_rx) = channel::<CommandResult>();
 
@@ -59,14 +66,17 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             .try_send(ClientPacket::Hello(None))
             .expect("Unable to send hello");
         // Wait for greeting from servers
-        loop {
+        let viewer_config = loop {
             match transport.try_receive() {
-                Ok(Some(p @ ServerPacket::Greeting(..))) => {
+                Ok(Some(ServerPacket::Greeting(_, x, y, width, height))) => {
                     // Got greeting!
-                    // Pass it to the handler if it wants to treat it further
-                    response_handler(p);
                     // Continue initialization
-                    break;
+                    break ViewerConfig {
+                        x,
+                        y,
+                        width,
+                        height,
+                    };
                 }
                 Ok(Some(res)) => {
                     panic!("Unexpected answer while waiting for handshake: {:?}", res);
@@ -80,7 +90,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             };
 
             sleep(Duration::from_millis(100));
-        }
+        };
 
         spawn(move || {
             loop {
@@ -115,11 +125,14 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             }
         });
 
-        FishApi {
-            _p: PhantomData,
-            request_tx,
-            response_rx,
-        }
+        (
+            FishApi {
+                _p: PhantomData,
+                request_tx,
+                response_rx,
+            },
+            viewer_config,
+        )
     }
 
     // Ping must be non-blocking, hence treated in `response_handler` of FishAPI

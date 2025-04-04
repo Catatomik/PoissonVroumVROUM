@@ -45,7 +45,7 @@ fn main() {
 
     let fishes = Arc::new(Mutex::new(Vec::new()));
 
-    let mut fish_api = FishApi::new(
+    let (mut fish_api, viewer_config) = FishApi::new(
         TcpClient::new(SocketAddrV4::new(config.get_address(), config.get_port())),
         {
             let mut fishes = fishes.clone();

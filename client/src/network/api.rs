@@ -69,16 +69,13 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     break;
                 }
                 Ok(Some(res)) => {
-                    eprintln!(
-                        "Expected greeting from server, got another response: {:?}",
-                        res
-                    );
+                    panic!("Unexpected answer while waiting for handshake: {:?}", res);
                 }
                 Ok(None) => {
                     // Got no response to read
                 }
                 Err(e) => {
-                    eprintln!("{:?}", e);
+                    panic!("Error while waiting for handshake: {:?}", e);
                 }
             };
 

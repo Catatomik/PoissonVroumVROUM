@@ -30,8 +30,8 @@ struct Cli {
 
 pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: ServerPacket) {
     match packet {
-        network::protocol::ServerPacket::Pong => {
-            println!("Pong!")
+        ServerPacket::Pong => {
+            println!("Pong!");
         }
         _ => unimplemented!(),
     }

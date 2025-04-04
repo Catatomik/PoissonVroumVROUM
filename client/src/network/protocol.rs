@@ -6,8 +6,8 @@ use std::str::FromStr;
 /// A server packet, i.e. a packet sent by a server following internal communication protocol
 #[derive(Debug)]
 pub enum ServerPacket {
-    /// < greeting <ID>
-    Greeting(Option<usize>),
+    /// < greeting <ID> <x> <y> <width> <height>
+    Greeting(usize, usize, usize, usize, usize),
     Pong,
     /// < no greeting
     /// Requested ID doesn't exist or is already affected
@@ -28,6 +28,7 @@ pub enum ServerPacketParsingError {
     UnsupportedCommand(String),
 }
 
+/// Server packet deserialization
 impl FromStr for ServerPacket {
     type Err = ServerPacketParsingError;
 
@@ -62,6 +63,7 @@ pub enum ClientPacket {
     LogOut,
 }
 
+/// Client packet serialization
 impl ToString for ClientPacket {
     fn to_string(&self) -> String {
         match self {

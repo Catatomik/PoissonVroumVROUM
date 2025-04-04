@@ -106,7 +106,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     }
                 }
 
-                let res = match transport.try_receive() {
+                match transport.try_receive() {
                     Ok(Some(p @ (ServerPacket::Ok | ServerPacket::NOk))) => {
                         if let Err(e) = response_tx.send(CommandResult::try_from(p).unwrap()) {
                             eprintln!("{:?}", e);

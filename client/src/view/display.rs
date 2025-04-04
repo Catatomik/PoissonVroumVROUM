@@ -1,9 +1,7 @@
 use raylib::prelude::*;
-use std::{collections::HashMap, thread::sleep, time::Duration};
+use std::collections::HashMap;
 
 use super::entities::Fish;
-
-const c: u64 = 5;
 
 pub fn display(new_fish_list: &mut Vec<Fish>) {
     let screen_width = 600;

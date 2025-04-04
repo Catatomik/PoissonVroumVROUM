@@ -99,7 +99,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     }
                 };
 
-                // Anyway, sleep to prevent consuming too much CUP
+                // Anyway, sleep to prevent consuming too much CPU
                 sleep(Duration::from_millis(100));
             }
         });

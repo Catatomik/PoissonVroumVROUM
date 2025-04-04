@@ -1,10 +1,10 @@
 //! General API to communicate trough a [transport] using [protocol]
 
-use super::protocol::{ClientPacket, ServerPacket, ServerPacketParsingError};
+use super::protocol::{ClientPacket, ServerPacket};
 use std::{
     fmt::Debug,
     marker::PhantomData,
-    sync::mpsc::{Receiver, Sender, TryRecvError, channel},
+    sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
     thread::{sleep, spawn},
     time::Duration,
 };
@@ -18,10 +18,9 @@ pub trait Transport<Req, Res> {
 }
 
 #[derive(Debug)]
-pub enum FishApiError<ReqE, ResE> {
-    RequestError(ReqE),
-    ResponseError(ResE),
-    ParsingError(ServerPacketParsingError),
+pub enum FishApiError {
+    RequestError(SendError<ClientPacket>),
+    ResponseError(RecvError),
 }
 
 pub enum CommandResult {
@@ -95,9 +94,10 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         }
     }
 
-    pub fn ping(&mut self) -> () {
+    // Ping must be non-blocking, hence treated in `response_handler` of FishAPI
+    pub fn ping(&mut self) -> Result<(), FishApiError> {
         self.request_tx
             .send(ClientPacket::Ping)
-            .expect("Cannot send through transport thread channel");
+            .map_err(FishApiError::RequestError)
     }
 }

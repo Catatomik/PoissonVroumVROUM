@@ -1,11 +1,10 @@
+use crate::network::api::ViewerConfig;
 use raylib::prelude::*;
 use std::collections::HashMap;
 
-pub fn display() {
-    let screen_width = 600;
-    let screen_height = 600;
+pub fn display(viewer_config: ViewerConfig) {
     let (mut rl, thread) = raylib::init()
-        .size(screen_width, screen_height)
+        .size(viewer_config.width as i32, viewer_config.height as i32)
         .title("Aquarium")
         .build();
 
@@ -35,7 +34,12 @@ pub fn display() {
         bg_texture.width() as f32,
         bg_texture.height() as f32,
     );
-    let bg_dest = Rectangle::new(0.0, 0.0, screen_width as f32, screen_height as f32);
+    let bg_dest = Rectangle::new(
+        0.0,
+        0.0,
+        viewer_config.width as f32,
+        viewer_config.height as f32,
+    );
     let origin = Vector2::new(0.0, 0.0);
 
     while !rl.window_should_close() {

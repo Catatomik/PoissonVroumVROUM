@@ -13,7 +13,8 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
     FILE *fp;
     fp = fopen(cfgpath, "r");
     if (fp == NULL) {
-        perror("Failed: ");
+        fprintf(stderr, "[ERR][%s:%s] failed to open file\n", __FILE__,
+                __FUNCTION__);
         return 1;
     }
 
@@ -30,11 +31,11 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
         }
         if (strncmp(buffer, "display-timeout-value", 21) == 0) {
             sscanf(value_start, "%d", &config->display_timeout_value);
-            controller_port_found = true;
+            display_timeout_value_found = true;
         }
         if (strncmp(buffer, "fish-update-interval", 20) == 0) {
             sscanf(value_start, "%d", &config->fish_update_interval);
-            controller_port_found = true;
+            fish_update_interval_found = true;
         }
     }
 

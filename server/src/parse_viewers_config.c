@@ -25,6 +25,7 @@ void add_viewer_config(struct viewers_config_t *config, int id, int x, int y,
     config->viewers_configs[config_index].y = y;
     config->viewers_configs[config_index].width = width;
     config->viewers_configs[config_index].height = height;
+    config->viewers_configs[config_index].is_in_use = false;
 }
 
 int viewers_config_from_file(struct viewers_config_t *config,
@@ -66,7 +67,7 @@ int viewers_config_from_file(struct viewers_config_t *config,
                 return i;
             if (ret == EOF)
                 return EOF;
-            add_viewer_config(config, viewer_id, width, height, x, y);
+            add_viewer_config(config, viewer_id, x, y, width, height);
         }
         i++;
     }

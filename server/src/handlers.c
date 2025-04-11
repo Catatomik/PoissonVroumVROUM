@@ -5,8 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-// > hello in as N3
-// < greeting N3 0x500+500+500
+/**
+ * write the response to given hello command in send_buffer
+ *
+ * @param args string with client command (without hello)
+ * @param send_buffer response for client
+ *
+ */
 int greeting(struct viewer_config_t **assigned_config, char *args,
              size_t args_len, char *send_buffer, size_t send_buffer_capacity) {
     int requested_id;
@@ -70,6 +75,13 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
 //     strcpy(server_response, "not yet bye");
 // }
 
+/**
+ * write the response to given ping command in send_buffer
+ *
+ * @param args string with client command (without ping)
+ * @param send_buffer response for client
+ *
+ */
 int pong(char *args, size_t args_len, char *send_buffer,
          size_t send_buffer_capacity) {
     int printed_count =
@@ -98,6 +110,17 @@ int pong(char *args, size_t args_len, char *send_buffer,
 //     strcpy(server_response, "not yet responseToStart");
 // }
 
+/**
+ *
+ * this function takes the client configuration, the client's command and the
+ * server's return buffer. It returns the appropriate response to the received
+ * client command
+ *
+ * @param viewer_config config of client (x,y, size ...)
+ * @param receive_buffer command from client
+ * @param send_buffer response for client
+ *
+ */
 int handle_client_request(struct viewer_config_t **viewer_config,
                           char *receive_buffer, size_t receive_buffer_len,
                           char *send_buffer, size_t send_buffer_capacity) {

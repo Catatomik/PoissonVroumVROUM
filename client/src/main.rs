@@ -11,6 +11,7 @@ use std::{
     net::SocketAddrV4,
     path::PathBuf,
     sync::{Arc, Mutex},
+    thread,
 };
 use view::entities;
 
@@ -29,8 +30,8 @@ struct Cli {
 
 pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: ServerPacket) {
     match packet {
-        network::protocol::ServerPacket::Pong => {
-            println!("Pong!")
+        ServerPacket::Pong => {
+            println!("Pong!");
         }
         _ => unimplemented!(),
     }
@@ -45,17 +46,19 @@ fn main() {
 
     let fishes = Arc::new(Mutex::new(Vec::new()));
 
-    let mut fish_api = FishApi::new(
+    let (mut fish_api, viewer_config) = FishApi::new(
         TcpClient::new(SocketAddrV4::new(config.get_address(), config.get_port())),
         {
             let mut fishes = fishes.clone();
             move |p| handle_packet(&mut fishes, p)
         },
     );
+    // Temp ping to check API connection
+    fish_api.ping().unwrap();
 
-    // fish_api.ping();
+    // Start display
+    thread::spawn(|| view::display::display(viewer_config));
 
     // Start loop of the app
-    command_loop(fish_api);
-    // view::display::display();
+    command_loop();
 }

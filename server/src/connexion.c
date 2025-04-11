@@ -1,16 +1,21 @@
 /* A simple server in the internet domain using TCP
    The port number is passed as an argument */
+#include "connexion.h"
+#include "config.h"
+#include "handlers.h"
+#include "parse_cfg.h"
+#include "parse_viewers_config.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "connexion.h"
 
 pthread_mutex_t mutex;
 
@@ -36,42 +41,83 @@ int config_socket(int portno, const char *ip_addr,
     serv_addr->sin_family = AF_INET;
     serv_addr->sin_addr.s_addr = inet_addr(ip_addr);
     serv_addr->sin_port = htons(portno);
+
+    // Make the port reusable
+    int enabled = 1;
+    int rc;
+    rc = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&enabled,
+                    sizeof(enabled));
+    if (rc < 0) {
+        perror("setsockopt() failed");
+        close(sockfd);
+        exit(-1);
+    }
+
     if (bind(sockfd, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0)
         error("ERROR on binding");
     return sockfd;
 }
+
+#define RECEIVE_BUFFER_CAPACITY 256
+#define SEND_BUFFER_CAPACITY 512
 
 void *thread_function_client(void *args) {
     threads_client_args_t *client_args = (threads_client_args_t *)args;
     int client_sockfd = client_args->client_sockfd;
     int *nb_thread_used = client_args->nb_thread_used;
     int thread_id = client_args->thread_id;
+    struct viewer_config_t *viewer_config = NULL;
 
-    char buffer[256];
-    int n;
+    size_t receive_buffer_len = 0;
+    char receive_buffer[RECEIVE_BUFFER_CAPACITY] = {0};
+    char send_buffer[SEND_BUFFER_CAPACITY] = {0};
 
-    // Handles socket exchange
-    bzero(buffer, 256);
-
-    n = read(client_sockfd, buffer, 255);
-    if (n < 0)
+    int n = read(client_sockfd, receive_buffer + receive_buffer_len,
+                 RECEIVE_BUFFER_CAPACITY - receive_buffer_len - 1);
+    if (n < 0) {
         error("ERROR reading from socket");
+        close(client_sockfd);
+        return NULL;
+    }
+    receive_buffer_len += n;
+    receive_buffer[receive_buffer_len] = '\0';
 
-    printf("The message from client %d: %s\n", thread_id, buffer);
-    n = write(client_sockfd, "I got your message", 18);
-    if (n < 0)
-        error("ERROR writing to socket");
+    if (strchr(receive_buffer, '\n') != NULL) {
+        // we have a full command
+        printf("The message from client %d: %s\n", thread_id, receive_buffer);
+        memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
+        if (handle_client_request(&viewer_config, receive_buffer,
+                                  receive_buffer_len, send_buffer,
+                                  SEND_BUFFER_CAPACITY)) {
+            fprintf(stderr, "Error handling client request\n");
+            // TODO: handle it ?
+        } else {
+            receive_buffer_len = 0;
+        }
+        size_t send_length = strnlen(send_buffer, SEND_BUFFER_CAPACITY);
+        if (send_length > 0) {
+            n = write(client_sockfd, send_buffer, send_length);
+            if (n < 0)
+                error("ERROR writing to socket");
+        }
+    }
+
+    // close client
     close(client_sockfd);
-
+    if (viewer_config) {
+        viewer_config->is_in_use = false;
+    }
+    free(client_args);
     // mark this thread as free to deal with another sockfd
     pthread_mutex_lock(&mutex);
     *nb_thread_used -= 1;
     pthread_mutex_unlock(&mutex);
+    printf("[INFO] client %d disconnected", thread_id);
     return NULL;
 }
 
-void *start(void *config) {
-
+int cli_addr_len = sizeof(struct sockaddr_in);
+void *start(void *_) {
     int next_id = 0;
     int thread_id;
     int nb_thread_used = 0;
@@ -81,15 +127,15 @@ void *start(void *config) {
     int sockfd, newsockfd;
     struct sockaddr_in serv_addr, cli_addr;
 
-    sockfd = config_socket(((struct config_t *)config)->controller_port,
-                           "127.0.0.1", &serv_addr);
-    int clilen = (sizeof(cli_addr));
+    sockfd = config_socket(config.controller_port, "127.0.0.1", &serv_addr);
+    printf("[INFO] server started! Listening to connections on port %d\n",
+           config.controller_port);
 
     // Add infinite loop to keep server running and accept new connections
     while (1) {
         listen(sockfd, 5);
         newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr,
-                           (unsigned int *restrict)&clilen);
+                           (unsigned int *)&cli_addr_len);
         if (newsockfd < 0)
             error("ERROR on accept");
 

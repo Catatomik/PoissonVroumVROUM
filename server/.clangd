@@ -1,3 +1,5 @@
 CompileFlags:
   Add:
     - "-Isrc/"
+    - "-Wall"
+    - "-Werror"

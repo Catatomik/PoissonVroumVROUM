@@ -53,7 +53,6 @@ fn main() {
             move |p| handle_packet(&mut fishes, p)
         },
     );
-
     // Temp ping to check API connection
     fish_api.ping().unwrap();
 
@@ -61,5 +60,5 @@ fn main() {
     thread::spawn(|| view::display::display(viewer_config));
 
     // Start loop of the app
-    command_loop();
+    command_loop(fish_api);
 }

@@ -60,5 +60,5 @@ fn main() {
     thread::spawn(|| view::display::display(viewer_config));
 
     // Start loop of the app
-    command_loop();
+    command_loop(fish_api);
 }

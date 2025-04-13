@@ -1,13 +1,13 @@
 use raylib::prelude::*;
 use std::{
     collections::HashMap,
-    sync::Mutex,
+    sync::{Arc, Mutex},
     time::{Instant, SystemTime},
 };
 
 use super::entities::Fish;
 
-pub fn display(new_fish_list: &mut Vec<Fish>) {
+pub fn display(new_fish_list: &mut Arc<Mutex<Vec<Fish>>>) {
     let screen_width = 600;
     let screen_height = 600;
     let (mut rl, thread) = raylib::init()
@@ -50,9 +50,9 @@ pub fn display(new_fish_list: &mut Vec<Fish>) {
         rl.set_target_fps(60);
         let mut d = rl.begin_drawing(&thread);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
-        find_next_current_positions(&mut current_fish_list, new_fish_list, dt);
+        find_next_current_positions(&mut current_fish_list, Arc::clone(&new_fish_list), dt);
         for (name, fish) in current_fish_list.iter_mut() {
-            let texture = find_right_texture(name.clone(), &map_fish_texture, &texture_default);
+            let texture = find_right_texture(name, &map_fish_texture, &texture_default);
             display_fish(&mut d, texture, fish.clone(), 0.0);
         }
     }
@@ -85,11 +85,12 @@ fn find_right_position(current_fish: &mut Fish, new_fish: &mut Fish, dt: f32) {
 // function which takes the list of the current fishes and one of the new one and calculate the new current positions of the fishes
 fn find_next_current_positions(
     current_fish_list: &mut HashMap<String, Fish>,
-    new_fish_list: &mut Vec<Fish>,
+    new_fish_list: Arc<Mutex<Vec<Fish>>>,
     dt: f32,
 ) {
-    for new_fish in new_fish_list.iter_mut() {
-        //if fish is not in current_fish_list, add it
+    let mut new_fish_list_guard = new_fish_list.lock().unwrap();
+
+    for new_fish in new_fish_list_guard.iter_mut() {
         if !current_fish_list.contains_key(&new_fish.name) {
             current_fish_list.insert(new_fish.name.clone(), new_fish.clone());
         } else {
@@ -119,7 +120,7 @@ fn display_fish(d: &mut RaylibDrawHandle, texture: &Texture2D, fish: Fish, rotat
 }
 
 fn find_right_texture<'a>(
-    name_fish: String,
+    name_fish: &String,
     map_fish_texture: &'a HashMap<String, Texture2D>,
     default: &'a Texture2D,
 ) -> &'a Texture2D {

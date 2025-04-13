@@ -7,7 +7,7 @@ use std::{
 };
 use super::entities::Fish;
 
-pub fn display(new_fish_list: &mut Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig)) {
+pub fn display(new_fish_list: &mut Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig) {
     let screen_width = 600;
     let screen_height = 600;
     let (mut rl, thread) = raylib::init()

@@ -1,6 +1,5 @@
 //! Internal communication protocol
 
-use crate::view::entities;
 use std::str::FromStr;
 
 /// A server packet, i.e. a packet sent by a server following internal communication protocol
@@ -16,7 +15,7 @@ pub enum ServerPacket {
     /// - position to go to
     /// - size (hitbox)
     /// - time to move
-    FishesList(Vec<entities::Fish>),
+    FishesList(Vec<Fish>),
     Ok,
     NOk,
     Bye,
@@ -35,9 +34,43 @@ impl FromStr for ServerPacket {
     fn from_str(raw_packet: &str) -> Result<ServerPacket, ServerPacketParsingError> {
         use ServerPacketParsingError::*;
 
-        let first_word = raw_packet.split_whitespace().next().ok_or(InvalidFormat)?;
+        let mut packet_parts = raw_packet.split_whitespace();
+        let first_word = packet_parts.next().ok_or(InvalidFormat)?;
         match first_word {
             "pong" => Ok(ServerPacket::Pong),
+            "OK" => Ok(ServerPacket::Ok),
+            "NOK" => Ok(ServerPacket::NOk),
+            "greeting" => {
+                let packet_parts_plus = packet_parts.flat_map(|s| s.split('+'));
+                if packet_parts_plus.clone().count() != 4 {
+                    Err(InvalidFormat)?;
+                };
+                let mut packet_parts_x = packet_parts_plus.flat_map(|s| s.split('x'));
+                if packet_parts_x.clone().count() != 5 {
+                    Err(InvalidFormat)?;
+                };
+                if let (Some(id), Some(x), Some(y), Some(w), Some(h), None) = (
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                    packet_parts_x.next(),
+                ) {
+                    Ok(ServerPacket::Greeting(
+                        id.strip_prefix("N")
+                            .ok_or(InvalidFormat)?
+                            .parse()
+                            .map_err(|_| InvalidFormat)?,
+                        x.parse().map_err(|_| InvalidFormat)?,
+                        y.parse().map_err(|_| InvalidFormat)?,
+                        w.parse().map_err(|_| InvalidFormat)?,
+                        h.parse().map_err(|_| InvalidFormat)?,
+                    ))
+                } else {
+                    Err(InvalidFormat)
+                }
+            }
             other => Err(UnsupportedCommand(other.to_string())),
         }
     }
@@ -56,10 +89,10 @@ pub enum ClientPacket {
     LsFishes(Option<usize>),
     /// Continuously ask for fishes
     GetFishesContinuously,
-    AddFish(entities::Fish),
-    DelFish,
+    AddFish(Fish),
+    DelFish(String),
     /// VroumVROUM
-    StartFish,
+    StartFish(String),
     LogOut,
 }
 
@@ -68,7 +101,30 @@ impl ToString for ClientPacket {
     fn to_string(&self) -> String {
         match self {
             Self::Ping => String::from("ping"),
+            Self::AddFish(fish) => format!(
+                "addFish {} at {}x{},{}x{}, {}",
+                fish.name,
+                fish.position_x,
+                fish.position_y,
+                fish.length,
+                fish.height,
+                fish.behavior
+            ),
+            Self::DelFish(name) => format!("delFish {}", name),
+            Self::StartFish(name) => format!("startFish {}", name),
+            Self::Hello(None) => String::from("hello"),
+            Self::Hello(Some(id)) => format!("hello as in {}", id),
             _ => unimplemented!(),
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Fish {
+    pub name: String,
+    pub position_x: u32,
+    pub position_y: u32,
+    pub length: u32,
+    pub height: u32,
+    pub behavior: String,
 }

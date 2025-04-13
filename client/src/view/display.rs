@@ -1,17 +1,17 @@
+use crate::network::api::ViewerConfig;
 use raylib::prelude::*;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
     time::{Instant, SystemTime},
 };
-
 use super::entities::Fish;
 
-pub fn display(new_fish_list: &mut Arc<Mutex<Vec<Fish>>>) {
+pub fn display(new_fish_list: &mut Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig)) {
     let screen_width = 600;
     let screen_height = 600;
     let (mut rl, thread) = raylib::init()
-        .size(screen_width, screen_height)
+        .size(viewer_config.width as i32, viewer_config.height as i32)
         .title("Aquarium")
         .build();
 
@@ -42,7 +42,12 @@ pub fn display(new_fish_list: &mut Arc<Mutex<Vec<Fish>>>) {
         bg_texture.width() as f32,
         bg_texture.height() as f32,
     );
-    let bg_dest = Rectangle::new(0.0, 0.0, screen_width as f32, screen_height as f32);
+    let bg_dest = Rectangle::new(
+        0.0,
+        0.0,
+        viewer_config.width as f32,
+        viewer_config.height as f32,
+    );
     let origin = Vector2::new(0.0, 0.0);
 
     while !rl.window_should_close() {

@@ -1,10 +1,11 @@
 //! General API to communicate trough a [transport] using [protocol]
 
-use super::protocol::{ClientPacket, ServerPacket, ServerPacketParsingError};
+use super::protocol::{ClientPacket, Fish, ServerPacket};
+
 use std::{
     fmt::Debug,
     marker::PhantomData,
-    sync::mpsc::{Receiver, Sender, TryRecvError, channel},
+    sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
     thread::{sleep, spawn},
     time::Duration,
 };
@@ -22,15 +23,23 @@ pub trait Transport<Req, Res> {
 }
 
 #[derive(Debug)]
-pub enum FishApiError<ReqE, ResE> {
-    RequestError(ReqE),
-    ResponseError(ResE),
-    ParsingError(ServerPacketParsingError),
+pub enum FishApiError {
+    RequestError(SendError<ClientPacket>),
+    ResponseError(RecvError),
 }
 
 pub enum CommandResult {
     Ok,
     NOk,
+}
+
+impl ToString for CommandResult {
+    fn to_string(&self) -> String {
+        match self {
+            CommandResult::Ok => String::from("OK"),
+            CommandResult::NOk => String::from("NOK"),
+        }
+    }
 }
 
 impl TryFrom<ServerPacket> for CommandResult {
@@ -46,6 +55,13 @@ impl TryFrom<ServerPacket> for CommandResult {
     }
 }
 
+pub struct ViewerConfig {
+    pub x: usize,
+    pub y: usize,
+    pub width: usize,
+    pub height: usize,
+}
+
 pub struct FishApi<T: Transport<ClientPacket, ServerPacket> + Send + 'static> {
     _p: PhantomData<T>,
     // Request channel transmission end
@@ -58,9 +74,40 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
     pub fn new<F: FnMut(ServerPacket) -> () + Send + 'static>(
         mut transport: T,
         mut response_handler: F,
-    ) -> Self {
+    ) -> (Self, ViewerConfig) {
         let (request_tx, request_rx) = channel::<ClientPacket>();
         let (response_tx, response_rx) = channel::<CommandResult>();
+
+        // Handshake, blocking
+        transport
+            .try_send(ClientPacket::Hello(None))
+            .expect("Unable to send hello");
+        // Wait for greeting from servers
+        let viewer_config = loop {
+            match transport.try_receive() {
+                Ok(Some(ServerPacket::Greeting(_, x, y, width, height))) => {
+                    // Got greeting!
+                    // Continue initialization
+                    break ViewerConfig {
+                        x,
+                        y,
+                        width,
+                        height,
+                    };
+                }
+                Ok(Some(res)) => {
+                    panic!("Unexpected answer while waiting for handshake: {:?}", res);
+                }
+                Ok(None) => {
+                    // Got no response to read
+                }
+                Err(e) => {
+                    panic!("Error while waiting for handshake: {:?}", e);
+                }
+            };
+
+            sleep(Duration::from_millis(100));
+        };
 
         spawn(move || {
             loop {
@@ -104,16 +151,41 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             }
         });
 
-        FishApi {
-            _p: PhantomData,
-            request_tx,
-            response_rx,
-        }
+        (
+            FishApi {
+                _p: PhantomData,
+                request_tx,
+                response_rx,
+            },
+            viewer_config,
+        )
     }
 
-    pub fn ping(&mut self) -> () {
+    // Ping must be non-blocking, hence treated in `response_handler` of FishAPI
+    pub fn ping(&mut self) -> Result<(), FishApiError> {
         self.request_tx
             .send(ClientPacket::Ping)
-            .expect("Cannot send through transport thread channel");
+            .map_err(FishApiError::RequestError)
+    }
+
+    pub fn add_fish(&mut self, fish: Fish) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::AddFish(fish))
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
+    }
+
+    pub fn del_fish(&mut self, name: String) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::DelFish(name))
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
+    }
+
+    pub fn start_fish(&mut self, name: String) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::StartFish(name))
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 }

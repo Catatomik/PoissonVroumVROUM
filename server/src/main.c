@@ -10,87 +10,78 @@
 struct viewers_config_t viewers_config;
 struct config_t config;
 
-#define SEND_CONFIG_BUFFER_CAPACITY 1024
 #define MAX_INPUT 256
 
-int help(char *send_config_buffer) {
-    strcpy(send_config_buffer,
-           "ERROR : command not recognized\n you can make these cmds :\n\t> "
-           "load\n\t> show\n\t> add\n\t> del\n\t> save\n");
+int help() {
+    printf("ERROR : command not recognized\n you can make these cmds :\n\t> "
+           "load <viewers config filepaths>\n\t> show aquarium\n\t> add view "
+           "<Nid XxY+width+height>\n\t> del view <id>\n\t> save <file name>\n");
     return 0;
 }
 
-int load(char *input, char *send_config_buffer,
-         size_t send_config_buffer_capacity) {
-    char aquaConfig[256] = {0};
-    sscanf(input, "%s", aquaConfig);
-    viewers_config_from_file(&viewers_config, aquaConfig);
+int load(char *input) {
+    if (strlen(input) > 5) {
+        if (viewers_config_from_file(&viewers_config, input + 5) != 0)
+            return 1;
 
-    snprintf(send_config_buffer, send_config_buffer_capacity,
-             "aquarium loaded (%d display view!)\n",
-             viewers_config.viewers_count);
-    return 0;
+        printf("aquarium loaded (%d display view!)\n",
+               viewers_config.viewers_count);
+        return 0;
+    }
+    printf("No path to viewer config given\n");
+    return 1;
 }
 
-int show(char *input, char *send_config_buffer,
-         size_t send_config_buffer_capacity) {
-    snprintf(send_config_buffer, send_config_buffer_capacity, "%dx%d\n",
-             viewers_config.width, viewers_config.height);
+int show() {
+    printf("%dx%d\n", viewers_config.width, viewers_config.height);
     for (int i = 0; i < viewers_config.viewers_count; i++) {
-        snprintf(send_config_buffer + strlen(send_config_buffer),
-                 sizeof(send_config_buffer) - strlen(send_config_buffer),
-                 "N%d  %dx%d+%d+%d\n", viewers_config.viewers_configs[i].id,
-                 viewers_config.viewers_configs[i].x,
-                 viewers_config.viewers_configs[i].y,
-                 viewers_config.viewers_configs[i].width,
-                 viewers_config.viewers_configs[i].height);
+        printf("N%d  %dx%d+%d+%d\n", viewers_config.viewers_configs[i].id,
+               viewers_config.viewers_configs[i].x,
+               viewers_config.viewers_configs[i].y,
+               viewers_config.viewers_configs[i].width,
+               viewers_config.viewers_configs[i].height);
     }
     return 0;
 }
 
-int add(char *input, char *send_config_buffer,
-        size_t send_config_buffer_capacity) {
+int add(char *input) {
     // TO DO
-    snprintf(send_config_buffer, send_config_buffer_capacity, "view added\n");
+    printf("view added\n");
     return 0;
 }
 
-int del(char *input, char *send_config_buffer,
-        size_t send_config_buffer_capacity) {
+int del(char *input) {
     // TO DO
-    snprintf(send_config_buffer, send_config_buffer_capacity, "view deleted\n");
+    printf("view deleted\n");
     return 0;
 }
 
-int save(char *input, char *send_config_buffer,
-         size_t send_config_buffer_capacity) {
+int save(char *input) {
     // TO DO
-    snprintf(send_config_buffer, send_config_buffer_capacity,
-             "Aquarium saved ! (%d display view!)\n",
-             viewers_config.viewers_count);
+    printf("Aquarium saved ! (%d display view!)\n",
+           viewers_config.viewers_count);
     return 0;
 }
 
-int repl_handler(char *input, char *send_config_buffer,
-                 size_t send_config_buffer_capacity) {
-    printf("stupid, %s\n", input);
+int repl_handler(char *input) {
+    printf("your command is %s\n", input);
 
-    if (strncmp(input, "load", 4) == 0) {
-        return load(input, send_config_buffer, send_config_buffer_capacity);
+    if (strncmp(input, "load ", 5) == 0) {
+        return load(input);
     }
-    if (strncmp(input, "show", 4) == 0) {
-        return show(input, send_config_buffer, send_config_buffer_capacity);
+    if (strncmp(input, "show aquarium", 13) == 0) {
+        return show(input);
     }
     if (strncmp(input, "add view", 8) == 0) {
-        return add(input, send_config_buffer, send_config_buffer_capacity);
+        return add(input);
     }
     if (strncmp(input, "del view", 8) == 0) {
-        return del(input, send_config_buffer, send_config_buffer_capacity);
+        return del(input);
     }
     if (strncmp(input, "save", 4) == 0) {
-        return save(input, send_config_buffer, send_config_buffer_capacity);
+        return save(input);
     } else {
-        return help(send_config_buffer);
+        return help();
     }
 }
 
@@ -116,7 +107,6 @@ int main(int argc, char **argv) {
 
     // init config structur of controller configuration file
     char input[MAX_INPUT];
-    char send_config_buffer[SEND_CONFIG_BUFFER_CAPACITY] = {0};
     while (1) {
         printf("> ");
         if (fgets(input, MAX_INPUT, stdin) == NULL) {
@@ -130,8 +120,7 @@ int main(int argc, char **argv) {
             break;
         }
 
-        repl_handler(input, send_config_buffer, SEND_CONFIG_BUFFER_CAPACITY);
-        printf("%s\n", send_config_buffer);
+        repl_handler(input);
     }
 
     printf("Hello, World!\n");

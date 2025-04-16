@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "connexion.h"
 #include "parse_cfg.h"
@@ -38,16 +39,19 @@ int show(input, send_config_buffer, send_config_buffer_capacity) {
                  viewers_config.viewers_count[i]->width,
                  viewers_config.viewers_count[i]->height);
     }
+    return 0;
 }
 
 int add(input, send_config_buffer, send_config_buffer_capacity) {
     // TO DO
     snprintf(send_config_buffer, sizeof(send_config_buffer), "view added\n");
+    return 0;
 }
 
 int del(input, send_config_buffer, send_config_buffer_capacity) {
     // TO DO
     snprintf(send_config_buffer, sizeof(send_config_buffer), "view deleted\n");
+    return 0;
 }
 
 int save(input, send_config_buffer, send_config_buffer_capacity) {
@@ -55,6 +59,7 @@ int save(input, send_config_buffer, send_config_buffer_capacity) {
     snprintf(send_config_buffer, sizeof(send_config_buffer),
              "Aquarium saved ! (%d display view!)\n",
              viewers_config.viewers_count);
+    return 0;
 }
 
 int repl_handler(struct config_t *config, char *input, char *send_config_buffer,
@@ -76,7 +81,7 @@ int repl_handler(struct config_t *config, char *input, char *send_config_buffer,
     if (strncmp(input, "save", 4) == 0) {
         return save(input, send_config_buffer, send_config_buffer_capacity);
     } else {
-        return help(send_config_buffer)
+        return help(send_config_buffer);
     }
 }
 
@@ -88,7 +93,7 @@ int main(int argc, char **argv) {
     // init config structur of controller configuration file
     struct config_t *config = malloc(sizeof(struct config_t));
     char input[MAX_INPUT];
-    char send_config_buffer[SEND_BUFFER_CAPACITY] = {0};
+    char send_config_buffer[SEND_CONFIG_BUFFER_CAPACITY] = {0};
 
     printf("Bienvenue dans le REPL config. Tapez 'exit' pour quitter.\n");
 

@@ -7,14 +7,16 @@ use std::{
     time::Instant,
 };
 
-pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig) {
+use std::path::PathBuf;
+
+pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig, path: PathBuf) {
     let (mut rl, thread) = raylib::init()
         .size(viewer_config.width as i32, viewer_config.height as i32)
         .title("Aquarium")
         .build();
-
-    let bg_image_path = "assets/aqua.png";
-    let bg_texture = rl.load_texture(&thread, bg_image_path).expect(&format!(
+    let path_ressources = path.to_str().expect("Chemin invalide");
+    let bg_image_path = format!("{}/aqua.png", path_ressources);
+    let bg_texture = rl.load_texture(&thread, &bg_image_path).expect(&format!(
         "Impossible de charger l'image de background de l'aquarium : {}",
         bg_image_path
     ));
@@ -25,13 +27,16 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
     let mut current_fish_list: HashMap<String, Fish> = HashMap::new();
 
     for &fish in &fish_names {
+        let fish_path = format!("{}/{}", path_ressources, fish);
         let texture = rl
-            .load_texture(&thread, &format!("assets/{}", fish))
+            .load_texture(&thread, &fish_path)
             .expect(&format!("Impossible de charger le poisson : {}", fish));
         map_fish_texture.insert(fish.to_string(), texture);
     }
+    let default_path: String = format!("{}/default.png", path_ressources);
+
     let texture_default = rl
-        .load_texture(&thread, "assets/default.png")
+        .load_texture(&thread, &default_path)
         .expect(&format!("Impossible de charger le poisson : {}", "default"));
 
     let bg_source: Rectangle = Rectangle::new(

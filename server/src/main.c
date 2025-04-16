@@ -1,11 +1,14 @@
+#include "connexion.h"
+#include "parse_cfg.h"
+#include "parse_viewers_config.h"
 #include "utils.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "connexion.h"
-#include "parse_cfg.h"
+struct viewers_config_t viewers_config;
+struct config_t config;
 
 #define SEND_CONFIG_BUFFER_CAPACITY 1024
 
@@ -88,6 +91,7 @@ int repl_handler(struct config_t *config, char *input, char *send_config_buffer,
 int main(int argc, char **argv) {
     UNUSED(argc);
     UNUSED(argv);
+
     pthread_t thread_connexion;
 
     // init config structur of controller configuration file
@@ -97,30 +101,34 @@ int main(int argc, char **argv) {
 
     printf("Bienvenue dans le REPL config. Tapez 'exit' pour quitter.\n");
 
-    if (config_from_file(config, "./controller.cfg")) {
-        pthread_create(&thread_connexion, NULL, start, (void *)config);
-        pthread_detach(thread_connexion);
+    if (config_from_file(&config, "./controller.cfg") != 0) {
+        printf("Error while parsing controller.cfg");
+        return -1;
+    }
+    if (viewers_config_from_file(&viewers_config, "./viewers.config") != 0) {
+        printf("Error while parsing viewers.config");
+        return -1;
+    }
 
-        while (1) {
-            printf("> ");
-            if (fgets(input, MAX_INPUT, stdin) == NULL) {
-                break;
-            }
+    pthread_create(&thread_connexion, NULL, start, NULL);
+    pthread_detach(thread_connexion);
+    // pthread_create(&thread_connexion, NULL, start, (void *)config);
 
-            // Supprime le saut de ligne
-            input[strcspn(input, "\n")] = '\0';
-
-            if (strcmp(input, "exit") == 0) {
-                break;
-            }
-
-            repl_handler(config, input, send_config_buffer,
-                         SEND_CONFIG_BUFFER_CAPACITY);
+    while (1) {
+        printf("> ");
+        if (fgets(input, MAX_INPUT, stdin) == NULL) {
+            break;
         }
 
-    } else {
-        printf("Error while parsing config file");
-        return -1;
+        // Supprime le saut de ligne
+        input[strcspn(input, "\n")] = '\0';
+
+        if (strcmp(input, "exit") == 0) {
+            break;
+        }
+
+        repl_handler(config, input, send_config_buffer,
+                     SEND_CONFIG_BUFFER_CAPACITY);
     }
 
     printf("Hello, World!\n");

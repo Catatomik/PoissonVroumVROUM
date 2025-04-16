@@ -1,6 +1,7 @@
 //! General API to communicate trough a [transport] using [protocol]
 
-use super::protocol::{ClientPacket, ServerPacket};
+use super::protocol::{ClientPacket, Fish, ServerPacket};
+
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -30,6 +31,15 @@ pub enum FishApiError {
 pub enum CommandResult {
     Ok,
     NOk,
+}
+
+impl ToString for CommandResult {
+    fn to_string(&self) -> String {
+        match self {
+            CommandResult::Ok => String::from("OK"),
+            CommandResult::NOk => String::from("NOK"),
+        }
+    }
 }
 
 impl TryFrom<ServerPacket> for CommandResult {
@@ -156,5 +166,26 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         self.request_tx
             .send(ClientPacket::Ping)
             .map_err(FishApiError::RequestError)
+    }
+
+    pub fn add_fish(&mut self, fish: Fish) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::AddFish(fish))
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
+    }
+
+    pub fn del_fish(&mut self, name: String) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::DelFish(name))
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
+    }
+
+    pub fn start_fish(&mut self, name: String) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::StartFish(name))
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 }

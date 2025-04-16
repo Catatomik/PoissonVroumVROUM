@@ -2,8 +2,10 @@
 #define __FISHES_H__
 #include <sys/queue.h>
 
+#define FISH_NAME_MAX_LENGTH 32
+
 struct fish_t {
-    char name[32];
+    char name[FISH_NAME_MAX_LENGTH];
     float current_x, current_y;
     float width, height;
     float target_x, target_y;

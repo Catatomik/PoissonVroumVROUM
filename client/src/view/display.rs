@@ -1,15 +1,13 @@
+use super::entities::Fish;
 use crate::network::api::ViewerConfig;
 use raylib::prelude::*;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
-    time::{Instant, SystemTime},
+    time::Instant,
 };
-use super::entities::Fish;
 
 pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig) {
-    let screen_width = 600;
-    let screen_height = 600;
     let (mut rl, thread) = raylib::init()
         .size(viewer_config.width as i32, viewer_config.height as i32)
         .title("Aquarium")

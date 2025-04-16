@@ -90,7 +90,7 @@ fn find_right_position(current_fish: &mut Fish, new_fish: &mut Fish, dt: f32) {
 // function which takes the list of the current fishes and one of the new one and calculate the new current positions of the fishes
 fn find_next_current_positions(
     current_fish_list: &mut HashMap<String, Fish>,
-    new_fish_list: Arc<Mutex<Vec<Fish>>>,
+    new_fish_list: &Arc<Mutex<Vec<Fish>>>,
     dt: f32,
 ) {
     let mut new_fish_list_guard = new_fish_list.lock().unwrap();

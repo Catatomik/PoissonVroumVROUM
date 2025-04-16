@@ -11,6 +11,7 @@ struct viewers_config_t viewers_config;
 struct config_t config;
 
 #define SEND_CONFIG_BUFFER_CAPACITY 1024
+#define MAX_INPUT 256
 
 int help(char *send_config_buffer) {
     strcpy(send_config_buffer,
@@ -19,55 +20,60 @@ int help(char *send_config_buffer) {
     return 0;
 }
 
-int load(input, send_config_buffer, send_config_buffer_capacity) {
+int load(char *input, char *send_config_buffer,
+         size_t send_config_buffer_capacity) {
     char aquaConfig[256] = {0};
-    sscanf(input, "%s", &aquaConfig);
-    viewers_config_from_file(viewers_config, aquaConfig);
+    sscanf(input, "%s", aquaConfig);
+    viewers_config_from_file(&viewers_config, aquaConfig);
 
-    snprintf(send_config_buffer, sizeof(send_config_buffer),
+    snprintf(send_config_buffer, send_config_buffer_capacity,
              "aquarium loaded (%d display view!)\n",
              viewers_config.viewers_count);
     return 0;
 }
 
-int show(input, send_config_buffer, send_config_buffer_capacity) {
-    char *tmp[viewers_config.viewers_count];
-    snprintf(send_config_buffer, sizeof(send_config_buffer), "%dx%d\n");
+int show(char *input, char *send_config_buffer,
+         size_t send_config_buffer_capacity) {
+    snprintf(send_config_buffer, send_config_buffer_capacity, "%dx%d\n",
+             viewers_config.width, viewers_config.height);
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         snprintf(send_config_buffer + strlen(send_config_buffer),
                  sizeof(send_config_buffer) - strlen(send_config_buffer),
-                 "N%d  %dx%d+%d+%d\n", viewers_config.viewers_count[i]->id,
-                 viewers_config.viewers_count[i]->x,
-                 viewers_config.viewers_count[i]->y,
-                 viewers_config.viewers_count[i]->width,
-                 viewers_config.viewers_count[i]->height);
+                 "N%d  %dx%d+%d+%d\n", viewers_config.viewers_configs[i].id,
+                 viewers_config.viewers_configs[i].x,
+                 viewers_config.viewers_configs[i].y,
+                 viewers_config.viewers_configs[i].width,
+                 viewers_config.viewers_configs[i].height);
     }
     return 0;
 }
 
-int add(input, send_config_buffer, send_config_buffer_capacity) {
+int add(char *input, char *send_config_buffer,
+        size_t send_config_buffer_capacity) {
     // TO DO
-    snprintf(send_config_buffer, sizeof(send_config_buffer), "view added\n");
+    snprintf(send_config_buffer, send_config_buffer_capacity, "view added\n");
     return 0;
 }
 
-int del(input, send_config_buffer, send_config_buffer_capacity) {
+int del(char *input, char *send_config_buffer,
+        size_t send_config_buffer_capacity) {
     // TO DO
-    snprintf(send_config_buffer, sizeof(send_config_buffer), "view deleted\n");
+    snprintf(send_config_buffer, send_config_buffer_capacity, "view deleted\n");
     return 0;
 }
 
-int save(input, send_config_buffer, send_config_buffer_capacity) {
+int save(char *input, char *send_config_buffer,
+         size_t send_config_buffer_capacity) {
     // TO DO
-    snprintf(send_config_buffer, sizeof(send_config_buffer),
+    snprintf(send_config_buffer, send_config_buffer_capacity,
              "Aquarium saved ! (%d display view!)\n",
              viewers_config.viewers_count);
     return 0;
 }
 
-int repl_handler(struct config_t *config, char *input, char *send_config_buffer,
+int repl_handler(char *input, char *send_config_buffer,
                  size_t send_config_buffer_capacity) {
-    printf("%s\n", input);
+    printf("stupid, %s\n", input);
 
     if (strncmp(input, "load", 4) == 0) {
         return load(input, send_config_buffer, send_config_buffer_capacity);
@@ -94,13 +100,7 @@ int main(int argc, char **argv) {
 
     pthread_t thread_connexion;
 
-    // init config structur of controller configuration file
-    struct config_t *config = malloc(sizeof(struct config_t));
-    char input[MAX_INPUT];
-    char send_config_buffer[SEND_CONFIG_BUFFER_CAPACITY] = {0};
-
     printf("Bienvenue dans le REPL config. Tapez 'exit' pour quitter.\n");
-
     if (config_from_file(&config, "./controller.cfg") != 0) {
         printf("Error while parsing controller.cfg");
         return -1;
@@ -114,6 +114,9 @@ int main(int argc, char **argv) {
     pthread_detach(thread_connexion);
     // pthread_create(&thread_connexion, NULL, start, (void *)config);
 
+    // init config structur of controller configuration file
+    char input[MAX_INPUT];
+    char send_config_buffer[SEND_CONFIG_BUFFER_CAPACITY] = {0};
     while (1) {
         printf("> ");
         if (fgets(input, MAX_INPUT, stdin) == NULL) {
@@ -127,8 +130,8 @@ int main(int argc, char **argv) {
             break;
         }
 
-        repl_handler(config, input, send_config_buffer,
-                     SEND_CONFIG_BUFFER_CAPACITY);
+        repl_handler(input, send_config_buffer, SEND_CONFIG_BUFFER_CAPACITY);
+        printf("%s\n", send_config_buffer);
     }
 
     printf("Hello, World!\n");

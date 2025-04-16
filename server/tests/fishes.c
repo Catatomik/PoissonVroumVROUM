@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 struct viewers_config_t viewers_config;
 struct config_t config;
@@ -35,7 +36,8 @@ int main(int argc, char **argv) {
         assert(fp != NULL); // added a fish so there is a fish
 
         // check that the added fish is the same
-        assert((fp->name == f1.name) && (fp->current_x == f1.current_x) &&
+        assert((strcmp(fp->name, f1.name) == 0) &&
+               (fp->current_x == f1.current_x) &&
                (fp->current_y == f1.current_y) && (fp->width == f1.width) &&
                (fp->height == f1.height) && (fp->target_x == f1.target_x) &&
                (fp->target_y == f1.target_y) &&

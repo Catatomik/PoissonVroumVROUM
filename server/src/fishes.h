@@ -3,7 +3,7 @@
 #include <sys/queue.h>
 
 struct fish_t {
-    char *name;
+    char name[32];
     float current_x, current_y;
     float width, height;
     float target_x, target_y;

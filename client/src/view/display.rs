@@ -55,7 +55,7 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
         rl.set_target_fps(60);
         let mut d = rl.begin_drawing(&thread);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
-        find_next_current_positions(&mut current_fish_list, Arc::clone(&new_fish_list), dt);
+        find_next_current_positions(&mut current_fish_list, &new_fish_list, dt);
         for (name, fish) in current_fish_list.iter_mut() {
             let texture = find_right_texture(name, &map_fish_texture, &texture_default);
             display_fish(&mut d, texture, fish.clone(), 0.0);

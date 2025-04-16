@@ -15,6 +15,8 @@ int main(int argc, char **argv) {
     struct fish_t f1 = {.name = "blublu",
                         .current_x = 5,
                         .current_y = 3,
+                        .width = 4,
+                        .height = 4,
                         .target_x = 8,
                         .target_y = 9,
                         .time_left = 3};
@@ -34,8 +36,9 @@ int main(int argc, char **argv) {
 
         // check that the added fish is the same
         assert((fp->name == f1.name) && (fp->current_x == f1.current_x) &&
-               (fp->current_y == f1.current_y) &&
-               (fp->target_x == f1.target_x) && (fp->target_y == f1.target_y) &&
+               (fp->current_y == f1.current_y) && (fp->width == f1.width) &&
+               (fp->height == f1.height) && (fp->target_x == f1.target_x) &&
+               (fp->target_y == f1.target_y) &&
                (fp->time_left == f1.time_left));
     }
 

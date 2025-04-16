@@ -5,6 +5,7 @@
 struct fish_t {
     char *name;
     float current_x, current_y;
+    float width, height;
     float target_x, target_y;
     float time_left;
     TAILQ_ENTRY(fish_t) _next;

@@ -57,7 +57,7 @@ fn main() {
     fish_api.ping().unwrap();
 
     // Start display
-    thread::spawn(|| view::display::display(viewer_config));
+    thread::spawn(|| view::display::display(fishes, viewer_config));
 
     // Start loop of the app
     command_loop(fish_api);

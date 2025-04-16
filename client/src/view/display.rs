@@ -11,6 +11,7 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
     let (mut rl, thread) = raylib::init()
         .size(viewer_config.width as i32, viewer_config.height as i32)
         .title("Aquarium")
+        .log_level(TraceLogLevel::LOG_WARNING)
         .build();
 
     let bg_image_path = "assets/aqua.png";

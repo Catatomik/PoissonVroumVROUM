@@ -48,11 +48,9 @@ int add(char *input) {
     struct viewer_config_t newViewer;
     sscanf(input, " N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
            &newViewer.width, &newViewer.height);
-    printf("parse : N%d %dx%d+%d+%d\n", newViewer.id, newViewer.x, newViewer.y,
-           newViewer.width, newViewer.height);
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == newViewer.id) {
-            printf("this id is already used for an other view");
+            printf("this id is already used for an other view\n");
             return 1;
         }
     }
@@ -74,9 +72,7 @@ int overwrite(int i) {
 
 int del(char *input) {
     int id;
-    if (sscanf(input, " N%d", &id) != 0) {
-        return 1;
-    }
+    sscanf(input, " N%d", &id);
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == id) {
             if (overwrite(i) != 0)
@@ -91,14 +87,14 @@ int del(char *input) {
 
 int save(char *input) {
     if (strlen(input) < 2) {
-        printf("need a name to save config file");
+        printf("need a name to save config file\n");
         return 1;
     }
 
     FILE *filefd = fopen(input + 1, "w");
 
     if (filefd == NULL) {
-        perror("Erreur lors de l'ouverture du fichier");
+        perror("Erreur lors de l'ouverture du fichier\n");
         return 1;
     }
 

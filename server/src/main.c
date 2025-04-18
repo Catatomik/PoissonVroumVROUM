@@ -46,9 +46,10 @@ int show() {
 
 int add(char *input) {
     struct viewer_config_t newViewer;
-    sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
+    sscanf(input, " N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
            &newViewer.width, &newViewer.height);
-
+    printf("parse : N%d %dx%d+%d+%d\n", newViewer.id, newViewer.x, newViewer.y,
+           newViewer.width, newViewer.height);
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == newViewer.id) {
             printf("this id is already used for an other view");
@@ -62,17 +63,20 @@ int add(char *input) {
     return 0;
 }
 
-void overwrite(int i) {
+int overwrite(int i) {
     for (int j = i; j < viewers_config.viewers_count - 1; j++) {
         viewers_config.viewers_configs[j] =
             viewers_config.viewers_configs[j + 1];
     }
     viewers_config.viewers_count -= 1;
+    return 0;
 }
 
 int del(char *input) {
-    int id = 0;
-    sscanf(input, "N%d", &id);
+    int id;
+    if (sscanf(input, " N%d", &id) != 0) {
+        return 1;
+    }
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == id) {
             if (overwrite(i) != 0)
@@ -86,7 +90,12 @@ int del(char *input) {
 }
 
 int save(char *input) {
-    FILE *filefd = fopen(input, "w");
+    if (strlen(input) < 2) {
+        printf("need a name to save config file");
+        return 1;
+    }
+
+    FILE *filefd = fopen(input + 1, "w");
 
     if (filefd == NULL) {
         perror("Erreur lors de l'ouverture du fichier");
@@ -119,13 +128,13 @@ int repl_handler(char *input) {
         return show();
     }
     if (strncmp(input, "add view", 8) == 0) {
-        return add(input);
+        return add(input + 8);
     }
     if (strncmp(input, "del view", 8) == 0) {
-        return del(input);
+        return del(input + 8);
     }
     if (strncmp(input, "save", 4) == 0) {
-        return save(input);
+        return save(input + 4);
     } else {
         return help();
     }

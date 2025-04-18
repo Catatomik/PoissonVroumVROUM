@@ -50,8 +50,8 @@ int add(char *input) {
     sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
            &newViewer.width, &newViewer.height);
 
-    for (int i=0 ; i< viewers_config.viewers_count; i++){
-        if (viewers_config.viewers_configs[i].id == newViewer.id){
+    for (int i = 0; i < viewers_config.viewers_count; i++) {
+        if (viewers_config.viewers_configs[i].id == newViewer.id) {
             printf("this id is already used for an other view");
             return 1;
         }
@@ -118,7 +118,7 @@ int repl_handler(char *input) {
         return load(input);
     }
     if (strncmp(input, "show aquarium", 13) == 0) {
-        return show(input);
+        return show();
     }
     if (strncmp(input, "add view", 8) == 0) {
         return add(input);

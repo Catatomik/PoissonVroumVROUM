@@ -176,7 +176,7 @@ impl FromStr for ServerPacket {
                             fish_name, target_x, target_y, size_w, size_h, timestamp, false,
                         ))
                     })
-                    // Collection into a Result because it implements FromIterator
+                    // Collect into a Result because it implements FromIterator
                     // See https://doc.rust-lang.org/std/result/index.html#collecting-into-result
                     .collect::<Result<Vec<ViewFish>, ServerPacketParsingError>>()?,
             )),

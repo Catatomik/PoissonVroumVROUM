@@ -59,7 +59,7 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
         rl.set_target_fps(60);
         let mut d = rl.begin_drawing(&thread);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
-        find_next_current_positions(&mut current_fish_list, &new_fish_list, dt);
+        find_next_current_positions(&mut current_fish_list, &new_fish_list, dt, &viewer_config);
         for (name, fish) in current_fish_list.iter_mut() {
             let texture = find_right_texture(name, &map_fish_texture, &texture_default);
             display_fish(&mut d, texture, fish.clone(), 0.0);
@@ -71,23 +71,20 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
 //calculate the new position of the fish
 fn find_right_position(current_fish: &mut Fish, new_fish: &mut Fish, dt: f32) {
     let now = Instant::now();
-    if (new_fish.timestamp <= now) {
+    if new_fish.timestamp <= now {
         current_fish.target_x = new_fish.target_x;
         current_fish.target_y = new_fish.target_y;
     } else {
         let time_remain = new_fish.timestamp.duration_since(now);
         let duration = time_remain.as_secs_f64() * 1.0;
-        if (new_fish.timestamp <= now) {
-        } else {
-            let v_x = (new_fish.target_x - current_fish.target_x) as f64 / duration;
-            let v_y = (new_fish.target_y - current_fish.target_y) as f64 / duration;
+        let v_x = (new_fish.target_x - current_fish.target_x) as f64 / duration;
+        let v_y = (new_fish.target_y - current_fish.target_y) as f64 / duration;
 
-            let x = current_fish.target_x as f64 + v_x * dt as f64;
-            let y = current_fish.target_y as f64 + v_y * dt as f64;
+        let x = current_fish.target_x as f64 + v_x * dt as f64;
+        let y = current_fish.target_y as f64 + v_y * dt as f64;
 
-            current_fish.target_x = x as f32;
-            current_fish.target_y = y as f32;
-        }
+        current_fish.target_x = x as f32;
+        current_fish.target_y = y as f32;
     }
 }
 
@@ -96,12 +93,18 @@ fn find_next_current_positions(
     current_fish_list: &mut HashMap<String, Fish>,
     new_fish_list: &Arc<Mutex<Vec<Fish>>>,
     dt: f32,
+    viewer_config: &ViewerConfig,
 ) {
     let mut new_fish_list_guard = new_fish_list.lock().unwrap();
 
     for new_fish in new_fish_list_guard.iter_mut() {
         if !current_fish_list.contains_key(&new_fish.name) {
-            current_fish_list.insert(new_fish.name.clone(), new_fish.clone());
+            let mut fish = new_fish.clone();
+            fish.size_h = (new_fish.size_h * viewer_config.height as f32) / 100.0;
+            fish.size_w = (new_fish.size_w * viewer_config.width as f32) / 100.0;
+            fish.target_x = (new_fish.target_x * viewer_config.width as f32) / 100.0;
+            fish.target_y = (new_fish.target_y * viewer_config.height as f32) / 100.0;
+            current_fish_list.insert(new_fish.name.clone(), fish);
         } else {
             if let Some(current_fish) = current_fish_list.get_mut(&new_fish.name) {
                 find_right_position(current_fish, new_fish, dt);
@@ -118,7 +121,6 @@ fn display_fish(d: &mut RaylibDrawHandle, texture: &Texture2D, fish: Fish, rotat
     let w = fish.size_w;
     let scale_x = w as f32 / texture.width() as f32;
     let scale_y = h as f32 / texture.height() as f32;
-
     d.draw_texture_ex(
         texture,
         Vector2::new(x, y),

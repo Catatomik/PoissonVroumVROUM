@@ -56,7 +56,7 @@ void remove_all_fishes() {
     struct fish_t *f;
     while ((f = next_fish(old_fish))) {
         if (old_fish != NULL) {
-            remove_fish(old_fish); // BAD because alr removed
+            remove_fish(old_fish);
         }
         old_fish = f;
     }

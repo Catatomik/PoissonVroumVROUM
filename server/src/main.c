@@ -14,8 +14,7 @@ struct config_t config;
 
 int help() {
     printf("ERROR : command not recognized\n you can make these cmds :\n\t> "
-           "load <viewers config filepaths>\n\t> show aquarium\n\t>status "
-           "\n\t> add view "
+           "load <viewers config filepaths>\n\t> show aquarium\n\t> add view "
            "<Nid XxY+width+height>\n\t> del view <id>\n\t> save <file name>\n");
     return 0;
 }
@@ -63,13 +62,12 @@ int add(char *input) {
     return 0;
 }
 
-int overwrite(int i) {
+void overwrite(int i) {
     for (int j = i; j < viewers_config.viewers_count - 1; j++) {
         viewers_config.viewers_configs[j] =
             viewers_config.viewers_configs[j + 1];
     }
     viewers_config.viewers_count -= 1;
-    return 0;
 }
 
 int del(char *input) {

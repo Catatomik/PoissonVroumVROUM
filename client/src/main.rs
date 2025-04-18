@@ -33,6 +33,7 @@ pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: Serve
         ServerPacket::Pong => {
             println!("Pong!");
         }
+        ServerPacket::FishesList(list) => println!("{:?}", list),
         _ => unimplemented!(),
     }
 }

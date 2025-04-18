@@ -14,7 +14,8 @@ struct config_t config;
 
 int help() {
     printf("ERROR : command not recognized\n you can make these cmds :\n\t> "
-           "load <viewers config filepaths>\n\t> show aquarium\n\t> add view "
+           "load <viewers config filepaths>\n\t> show aquarium\n\t>status "
+           "\n\t> add view "
            "<Nid XxY+width+height>\n\t> del view <id>\n\t> save <file name>\n");
     return 0;
 }
@@ -45,19 +46,59 @@ int show() {
 }
 
 int add(char *input) {
-    // TO DO
+    struct viewer_config_t newViewer;
+    sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
+           &newViewer.width, &newViewer.height);
+    viewers_config.viewers_configs[viewers_config.viewers_count] = newViewer;
+    viewers_config.viewers_count += 1;
+
     printf("view added\n");
     return 0;
 }
 
-int del(char *input) {
-    // TO DO
-    printf("view deleted\n");
+int overwrite(int i) {
+    for (int j = i; j < viewers_config.viewers_count - 1; j++) {
+        viewers_config.viewers_configs[j] =
+            viewers_config.viewers_configs[j + 1];
+    }
+    viewers_config.viewers_count -= 1;
     return 0;
 }
 
+int del(char *input) {
+    int id = 0;
+    sscanf(input, "N%d", &id);
+    for (int i = 0; i < viewers_config.viewers_count; i++) {
+        if (viewers_config.viewers_configs[i].id == id) {
+            if (overwrite(i) != 0)
+                return 1;
+            printf("view N%d deleted\n", id);
+            return 0;
+        }
+    }
+    printf("view N%d not found\n", id);
+    return 1;
+}
+
 int save(char *input) {
-    // TO DO
+    FILE *filefd = fopen(input, "w");
+
+    if (filefd == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return 1;
+    }
+
+    fprintf(filefd, "%dx%d\n", viewers_config.width, viewers_config.height);
+    for (int i = 0; i < viewers_config.viewers_count; i++) {
+        fprintf(filefd, "N%d  %dx%d+%d+%d\n",
+                viewers_config.viewers_configs[i].id,
+                viewers_config.viewers_configs[i].x,
+                viewers_config.viewers_configs[i].y,
+                viewers_config.viewers_configs[i].width,
+                viewers_config.viewers_configs[i].height);
+    }
+    fclose(filefd);
+
     printf("Aquarium saved ! (%d display view!)\n",
            viewers_config.viewers_count);
     return 0;

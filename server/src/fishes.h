@@ -13,10 +13,16 @@ struct fish_t {
     TAILQ_ENTRY(fish_t) _next;
 };
 
+// makes a copy of the current fish and adds it to the fishes
+// returns != 0 if an error occured (eg: OOM)
 int add_fish(struct fish_t fish);
 
+// removes the given fish ptr from the fishes
+// returns != 0 if an error occured
 int remove_fish(struct fish_t *to_remove);
 
+// removes the first fish with this name from the fishes
+// returns != 0 if no fish was found and removed with this name
 // warning: this is O(n)
 int remove_fish_by_name(char *name);
 
@@ -24,5 +30,8 @@ int remove_fish_by_name(char *name);
 // if called with f == NULL, returns the first fish
 // if no next fish, returns NULL
 struct fish_t *next_fish(struct fish_t *f);
+
+// clears all the fishes
+void remove_all_fishes();
 
 #endif //__FISHES_H__

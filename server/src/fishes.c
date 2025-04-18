@@ -50,3 +50,14 @@ struct fish_t *next_fish(struct fish_t *f) {
         return TAILQ_FIRST(&fishes);
     return TAILQ_NEXT(f, _next);
 }
+
+void remove_all_fishes() {
+    struct fish_t *old_fish = NULL;
+    struct fish_t *f;
+    while ((f = next_fish(old_fish))) {
+        if (old_fish != NULL) {
+            remove_fish(old_fish); // BAD because alr removed
+        }
+        old_fish = f;
+    }
+}

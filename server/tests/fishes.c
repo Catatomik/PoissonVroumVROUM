@@ -68,5 +68,7 @@ int main(int argc, char **argv) {
         assert(next_fish(NULL) == NULL);
     }
 
+    remove_all_fishes();
+
     return 0;
 }

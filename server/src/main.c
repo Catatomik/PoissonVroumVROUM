@@ -49,6 +49,13 @@ int add(char *input) {
     struct viewer_config_t newViewer;
     sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
            &newViewer.width, &newViewer.height);
+
+    for (int i=0 ; i< viewers_config.viewers_count; i++){
+        if (viewers_config.viewers_configs[i].id == newViewer.id){
+            printf("this id is already used for an other view");
+            return 1;
+        }
+    }
     viewers_config.viewers_configs[viewers_config.viewers_count] = newViewer;
     viewers_config.viewers_count += 1;
 

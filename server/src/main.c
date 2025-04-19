@@ -20,14 +20,16 @@ int help() {
 }
 
 int load(char *input) {
-    if (strlen(input) > 5) {
-        if (viewers_config_from_file(&viewers_config, input + 5) != 0)
-            return 1;
-
-        printf("aquarium loaded (%d display view!)\n",
-               viewers_config.viewers_count);
+    if (strlen(input) <= 0) {
         return 0;
     }
+    if (viewers_config_from_file(&viewers_config, input) != 0)
+        return 1;
+
+    printf("aquarium loaded (%d display view!)\n",
+            viewers_config.viewers_count);
+    return 0;
+    
     printf("No path to viewer config given\n");
     return 1;
 }
@@ -46,8 +48,11 @@ int show() {
 
 int add(char *input) {
     struct viewer_config_t newViewer;
-    sscanf(input, " N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
-           &newViewer.width, &newViewer.height);
+    if (sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
+           &newViewer.width, &newViewer.height) < 5){
+            printf("command unrecognized\n");
+            return 1;
+        }
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == newViewer.id) {
             printf("this id is already used for an other view\n");
@@ -72,7 +77,10 @@ int overwrite(int i) {
 
 int del(char *input) {
     int id;
-    sscanf(input, " N%d", &id);
+    if (sscanf(input, "N%d", &id) != 1){
+        printf("command unrecognized\n");
+        return 1;
+    }
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == id) {
             if (overwrite(i) != 0)
@@ -114,23 +122,33 @@ int save(char *input) {
     return 0;
 }
 
+/**
+* call the right function asked in repl
+*
+* @param input what user write in REPL
+* return 0 if succes 1 else
+ */
 int repl_handler(char *input) {
     printf("your command is %s\n", input);
 
-    if (strncmp(input, "load ", 5) == 0) {
-        return load(input);
+    if (strncmp(input, "load ", strlen("load ")) == 0) {
+        int offset = strlen("load ");
+        return load(input + offset);
     }
-    if (strncmp(input, "show aquarium", 13) == 0) {
+    if (strncmp(input, "show aquarium", strlen("show aquarium")) == 0) {
         return show();
     }
     if (strncmp(input, "add view", 8) == 0) {
-        return add(input + 8);
+        int offset = strlen("add view ");
+        return add(input + offset);
     }
     if (strncmp(input, "del view", 8) == 0) {
-        return del(input + 8);
+        int offset = strlen("del view ");
+        return del(input + offset);
     }
     if (strncmp(input, "save", 4) == 0) {
-        return save(input + 4);
+        int offset = strlen("save ");
+        return save(input + offset);
     } else {
         return help();
     }
@@ -142,7 +160,7 @@ int main(int argc, char **argv) {
 
     pthread_t thread_connexion;
 
-    printf("Bienvenue dans le REPL config. Tapez 'exit' pour quitter.\n");
+    printf("Server vroum vroum config\n");
     if (config_from_file(&config, "./controller.cfg") != 0) {
         printf("Error while parsing controller.cfg");
         return -1;
@@ -174,6 +192,5 @@ int main(int argc, char **argv) {
         repl_handler(input);
     }
 
-    printf("Hello, World!\n");
     return 0;
 }

@@ -21,6 +21,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install missing dependencies
+      run: sudo apt install xorg-dev
     - name: Build
       run: cargo build --verbose
     - name: Clippy

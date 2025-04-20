@@ -133,7 +133,7 @@ fn display_fish(d: &mut RaylibDrawHandle, texture: &Texture2D, fish: Fish, rotat
 }
 
 fn find_right_texture<'a>(
-    name_fish: &String,
+    name_fish: &str,
     map_fish_texture: &'a HashMap<String, Texture2D>,
     default: &'a Texture2D,
 ) -> &'a Texture2D {

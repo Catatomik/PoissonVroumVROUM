@@ -12,9 +12,9 @@ use std::{
 
 #[derive(Debug)]
 pub enum TcpReceiveError<E> {
-    ParsingError(E),
-    SocketError(io::Error),
-    Utf8Error(Utf8Error),
+    Parsing(E),
+    Socket(io::Error),
+    Utf8(Utf8Error),
 }
 
 /// Little wrapper around TcpClient to implement Transport
@@ -64,7 +64,7 @@ where
                 return if let io::ErrorKind::WouldBlock = e.kind() {
                     Ok(None)
                 } else {
-                    Err(Self::ResponseError::SocketError(e))
+                    Err(Self::ResponseError::Socket(e))
                 };
             }
         };
@@ -79,11 +79,10 @@ where
             None => return Ok(None),
         };
 
-        let res = Res::from_str(
-            from_utf8(&self.buf[..newline_idx]).map_err(Self::ResponseError::Utf8Error)?,
-        )
-        .map(Some)
-        .map_err(Self::ResponseError::ParsingError);
+        let res =
+            Res::from_str(from_utf8(&self.buf[..newline_idx]).map_err(Self::ResponseError::Utf8)?)
+                .map(Some)
+                .map_err(Self::ResponseError::Parsing);
 
         // Remove read line
         self.buf.splice(..=newline_idx, []);

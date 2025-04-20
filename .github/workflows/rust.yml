@@ -13,7 +13,6 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,11 +20,57 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    # Required to build raylib ; need X11 headers
+    # see https://github.com/glfw/glfw/issues/1957#issuecomment-908506994
     - name: Install missing dependencies
       run: sudo apt install xorg-dev
     - name: Build
       run: cargo build --verbose
+    # Save built files
+    - name: Cache built files
+      uses: actions/cache/save@v4
+      with:
+        path: client/target
+        key: built-client-${{ github.sha }}
+
+  # Linting would fail if it doesn't build
+  # It could be run anyway, but would need to reinstall missing dependencies & build from scratch
+  lint:
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+    - uses: actions/checkout@v4
+    # Re-use previously built files
+    - name: Restore built files
+      uses: actions/cache/restore@v4
+      with:
+        path: client/target
+        key: built-client-${{ github.sha }}
+        fail-on-cache-miss: true
     - name: Clippy
-      run: cargo clippy
+      run: cargo clippy --no-deps -- -Dwarnings
+    - name: Format
+      run: cargo fmt -- --check
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+    - uses: actions/checkout@v4
+    # Re-use previously built files
+    - name: Restore built files
+      uses: actions/cache/restore@v4
+      with:
+        path: client/target
+        key: built-client-${{ github.sha }}
+        fail-on-cache-miss: true
     - name: Run tests
       run: cargo test --verbose

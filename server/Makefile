@@ -13,7 +13,7 @@ SRC_NO_MAIN_OBJ = $(filter-out $(SRCBUILDDIR)/main.o, $(SRC_OBJ))
 TEST_BINS = $(patsubst $(TESTDIR)/%.c, $(TESTBUILDDIR)/%.test, $(wildcard $(TESTDIR)/*.c))
 TEST_BINS_EXEC = $(patsubst $(TESTBUILDDIR)/%.test, %, $(TEST_BINS))
 
-all: main test
+all: main $(TEST_BINS)
 
 $(SRCBUILDDIR):
 	mkdir -p $(SRCBUILDDIR)

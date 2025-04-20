@@ -30,6 +30,9 @@ int load(char *input) {
     if (viewers_config_from_file(&viewers_config, input) != 0)
         return 1;
 
+    // remove all fishes from last configuration
+    remove_all_fishes();
+
     printf("aquarium loaded (%d display view!)\n",
            viewers_config.viewers_count);
     return 0;

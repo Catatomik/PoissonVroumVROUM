@@ -25,14 +25,14 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
 
         match main_command {
             "status" => {
-                if let None = command_parts.next() {
+                if command_parts.next().is_none() {
                     status();
                 } else {
                     println!("Usage: status");
                 }
             }
             "help" => {
-                if let None = command_parts.next() {
+                if command_parts.next().is_none() {
                     help();
                 } else {
                     println!("Usage: help");
@@ -107,7 +107,7 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
                 }
             }
             "quit" => {
-                if let None = command_parts.next() {
+                if command_parts.next().is_none() {
                     break;
                 } else {
                     println!("Usage: quit");

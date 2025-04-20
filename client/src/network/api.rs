@@ -71,7 +71,7 @@ pub struct FishApi<T: Transport<ClientPacket, ServerPacket> + Send + 'static> {
 }
 
 impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
-    pub fn new<F: FnMut(ServerPacket) -> () + Send + 'static>(
+    pub fn new<F: FnMut(ServerPacket) + Send + 'static>(
         mut transport: T,
         mut response_handler: F,
     ) -> (Self, ViewerConfig) {

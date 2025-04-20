@@ -42,21 +42,21 @@ impl FromStr for ServerPacket {
         let first_word = packet_parts.next().ok_or(InvalidFormat)?;
         match first_word {
             "pong" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::Pong)
                 } else {
                     Err(InvalidFormat)
                 }
             }
             "OK" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::Ok)
                 } else {
                     Err(InvalidFormat)
                 }
             }
             "NOK" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::NOk)
                 } else {
                     Err(InvalidFormat)
@@ -106,7 +106,7 @@ impl FromStr for ServerPacket {
                 }
             }
             "bye" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::Bye)
                 } else {
                     Err(InvalidFormat)

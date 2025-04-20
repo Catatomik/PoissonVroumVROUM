@@ -17,8 +17,14 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
         .build();
     let path_ressources = path.to_str().expect("Chemin invalide");
     let bg_image_path = format!("{}/aqua.png", path_ressources);
-    let bg_texture = rl.load_texture(&thread, &bg_image_path).unwrap_or_else(|_| panic!("Impossible de charger l'image de background de l'aquarium : {}",
-        bg_image_path));
+    let bg_texture = rl
+        .load_texture(&thread, &bg_image_path)
+        .unwrap_or_else(|_| {
+            panic!(
+                "Impossible de charger l'image de background de l'aquarium : {}",
+                bg_image_path
+            )
+        });
 
     let fish_names = ["fish1.png", "fish2.png", "default.png"];
 

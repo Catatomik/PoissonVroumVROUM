@@ -19,21 +19,25 @@ int help() {
     return 0;
 }
 
+/**
+ * load views configuration from a file
+ */
 int load(char *input) {
     if (strlen(input) <= 0) {
-        return 0;
+        printf("No path to viewer config given\n");
+        return 1;
     }
     if (viewers_config_from_file(&viewers_config, input) != 0)
         return 1;
 
     printf("aquarium loaded (%d display view!)\n",
-            viewers_config.viewers_count);
+           viewers_config.viewers_count);
     return 0;
-    
-    printf("No path to viewer config given\n");
-    return 1;
 }
 
+/**
+ * show views configuration
+ */
 int show() {
     printf("%dx%d\n", viewers_config.width, viewers_config.height);
     for (int i = 0; i < viewers_config.viewers_count; i++) {
@@ -46,13 +50,16 @@ int show() {
     return 0;
 }
 
+/**
+ * add a view to configuration
+ */
 int add(char *input) {
     struct viewer_config_t newViewer;
-    if (sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x, &newViewer.y,
-           &newViewer.width, &newViewer.height) < 5){
-            printf("command unrecognized\n");
-            return 1;
-        }
+    if (sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x,
+               &newViewer.y, &newViewer.width, &newViewer.height) < 5) {
+        printf("command unrecognized\n");
+        return 1;
+    }
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == newViewer.id) {
             printf("this id is already used for an other view\n");
@@ -75,9 +82,12 @@ int overwrite(int i) {
     return 0;
 }
 
+/**
+ * delete a view from configuration
+ */
 int del(char *input) {
     int id;
-    if (sscanf(input, "N%d", &id) != 1){
+    if (sscanf(input, "N%d", &id) != 1) {
         printf("command unrecognized\n");
         return 1;
     }
@@ -93,8 +103,11 @@ int del(char *input) {
     return 1;
 }
 
+/**
+ * Save views configuration in file
+ */
 int save(char *input) {
-    if (strlen(input) < 2) {
+    if (strlen(input) <= 0) {
         printf("need a name to save config file\n");
         return 1;
     }
@@ -123,32 +136,28 @@ int save(char *input) {
 }
 
 /**
-* call the right function asked in repl
-*
-* @param input what user write in REPL
-* return 0 if succes 1 else
+ * call the right function asked in repl
+ *
+ * @param input what user write in REPL
+ * return 0 if succes 1 else
  */
 int repl_handler(char *input) {
     printf("your command is %s\n", input);
 
-    if (strncmp(input, "load ", strlen("load ")) == 0) {
-        int offset = strlen("load ");
-        return load(input + offset);
+    if (strncmp(input, "load ", 5) == 0) {
+        return load(input + 5);
     }
-    if (strncmp(input, "show aquarium", strlen("show aquarium")) == 0) {
+    if (strncmp(input, "show aquarium", 13) == 0) {
         return show();
     }
-    if (strncmp(input, "add view", 8) == 0) {
-        int offset = strlen("add view ");
-        return add(input + offset);
+    if (strncmp(input, "add view ", 9) == 0) {
+        return add(input + 9);
     }
-    if (strncmp(input, "del view", 8) == 0) {
-        int offset = strlen("del view ");
-        return del(input + offset);
+    if (strncmp(input, "del view ", 9) == 0) {
+        return del(input + 9);
     }
-    if (strncmp(input, "save", 4) == 0) {
-        int offset = strlen("save ");
-        return save(input + offset);
+    if (strncmp(input, "save ", 5) == 0) {
+        return save(input + 5);
     } else {
         return help();
     }

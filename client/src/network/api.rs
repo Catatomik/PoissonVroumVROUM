@@ -3,6 +3,7 @@
 use super::protocol::{ClientPacket, Fish, ServerPacket};
 
 use std::{
+    fmt,
     fmt::Debug,
     marker::PhantomData,
     sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
@@ -33,11 +34,11 @@ pub enum CommandResult {
     NOk,
 }
 
-impl ToString for CommandResult {
-    fn to_string(&self) -> String {
+impl fmt::Display for CommandResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CommandResult::Ok => String::from("OK"),
-            CommandResult::NOk => String::from("NOK"),
+            CommandResult::Ok => write!(f, "OK"),
+            CommandResult::NOk => write!(f, "NOK"),
         }
     }
 }

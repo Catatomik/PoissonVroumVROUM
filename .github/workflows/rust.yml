@@ -32,7 +32,13 @@ jobs:
     - name: Cache built files
       uses: actions/cache/save@v4
       with:
-        path: client/target
+        # From https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          client/target/
         key: built-client-${{ github.sha }}
 
   # Linting would fail if it doesn't build

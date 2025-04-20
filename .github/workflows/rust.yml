@@ -56,7 +56,12 @@ jobs:
     - name: Restore built files
       uses: actions/cache/restore@v4
       with:
-        path: client/target
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          client/target/
         key: built-client-${{ github.sha }}
         fail-on-cache-miss: true
     - name: Clippy
@@ -77,12 +82,13 @@ jobs:
     - name: Restore built files
       uses: actions/cache/restore@v4
       with:
-        path: client/target
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          client/target/
         key: built-client-${{ github.sha }}
         fail-on-cache-miss: true
-    - name: debug
-      run: |
-        ls target/
-        ls target/debug
     - name: Run tests
       run: cargo test --verbose

@@ -72,5 +72,9 @@ jobs:
         path: client/target
         key: built-client-${{ github.sha }}
         fail-on-cache-miss: true
+    - name: debug
+      run: |
+        ls target/
+        ls target/debug
     - name: Run tests
       run: cargo test --verbose

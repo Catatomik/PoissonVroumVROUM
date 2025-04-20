@@ -1,0 +1,29 @@
+name: Rust
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "client/*"
+      # If this workflow changes, it will run again
+      - ".github/workflows/*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Clippy
+      run: cargo clippy
+    - name: Run tests
+      run: cargo test --verbose

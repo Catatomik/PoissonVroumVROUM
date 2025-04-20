@@ -35,8 +35,11 @@ jobs:
     - uses: actions/checkout@v4
     # Required to build raylib ; need X11 headers
     # see https://github.com/glfw/glfw/issues/1957#issuecomment-908506994
-    - name: Install missing dependencies
-      run: sudo apt install xorg-dev
+    - name: Install build dependencies
+      uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      with:
+        packages: xorg-dev
+        version: 1.0
     - name: Build
       run: cargo build --verbose
     # Save built files
@@ -75,6 +78,12 @@ jobs:
           client/target/
         key: built-client-${{ github.sha }}
         fail-on-cache-miss: true
+    # Required to build raylib ; need X11 headers
+    # see https://github.com/glfw/glfw/issues/1957#issuecomment-908506994
+    - name: Install build dependencies
+      uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      with:
+        packages: xorg-dev
     - name: Clippy
       run: cargo clippy --no-deps -- -Dwarnings
 
@@ -99,5 +108,11 @@ jobs:
           client/target/
         key: built-client-${{ github.sha }}
         fail-on-cache-miss: true
+    # Required to build raylib ; need X11 headers
+    # see https://github.com/glfw/glfw/issues/1957#issuecomment-908506994
+    - name: Install build dependencies
+      uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      with:
+        packages: xorg-dev
     - name: Run tests
       run: cargo test --verbose

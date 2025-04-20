@@ -8,6 +8,18 @@ on:
       - ".github/workflows/*"
 
 jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Format
+      run: make check-format
+
   build:
     name: Build
     runs-on: ubuntu-latest

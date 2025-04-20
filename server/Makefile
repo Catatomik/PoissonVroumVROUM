@@ -1,4 +1,5 @@
 VG ?= valgrind
+CFMT ?= clang-format
 
 SRCDIR = src
 TESTDIR = tests
@@ -7,6 +8,7 @@ SRCBUILDDIR = $(BUILDDIR)/src
 TESTBUILDDIR = $(BUILDDIR)/tests
 
 CFLAGS = -Wall -Werror -I$(SRCDIR)
+CFMTFLAGS ?= -style='file:.clang-format'
 VFLAGS ?= --leak-check=full
 
 SRC = $(wildcard $(SRCDIR)/*.c)
@@ -56,10 +58,19 @@ $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 	timeout 5 valgrind $(VFLAGS) ./$< >/dev/null 2>&1 && echo 'succès' || echo 'échec'
 
 valgrind: $(TEST_BINS_EXEC_VG)
+
+# Formats all files in source dirs (src, test)
+format:
+	$(CFMT) $(CFMTFLAGS) -i $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*.h) $(wildcard $(TESTDIR)/*.c)
+
+# Check formatting according to previous rule
+check-format:
+	$(CFMT) $(CFMTFLAGS) --dry-run --Werror $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*.h) $(wildcard $(TESTDIR)/*.c)
+
 clean:
 	rm -rf $(BUILDDIR) main
 
 # Rules that don't produce files
-.PHONY: all $(TEST_BINS_EXEC) test $(TEST_BINS_EXEC_VG) valgrind clean
+.PHONY: all $(TEST_BINS_EXEC) test $(TEST_BINS_EXEC_VG) valgrind format check-format clean
 # Do not print executed commands while running tests, for cleaner output
 .SILENT: $(TEST_BINS_EXEC) $(TEST_BINS_EXEC_VG)

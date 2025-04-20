@@ -35,10 +35,7 @@ jobs:
     - name: Cache built files
       uses: actions/cache/save@v4
       with:
-        path: |
-          ./server/build
-          ./server/tests/assets
-          ./server/Makefile
+        path: server/build
         key: built-${{ github.sha }}
 
   test:
@@ -50,14 +47,18 @@ jobs:
         working-directory: server
 
     steps:
-    # Re-use previously built files, no need to checkout
+    # Get needed files for testing : Makefile & test assets
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          server/Makefile
+          server/tests/assets
+    # Re-use previously built files
     - name: Restore built files
       uses: actions/cache/restore@v4
       with:
-        path: |
-          ./server/build
-          ./server/tests/assets
-          ./server/Makefile
+        path: server/build
         key: built-${{ github.sha }}
         fail-on-cache-miss: true
     - name: Test

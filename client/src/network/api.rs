@@ -25,6 +25,8 @@ pub trait Transport<Req, Res> {
 
 #[derive(Debug)]
 pub enum FishApiError {
+    // Temp
+    #[allow(dead_code)]
     RequestError(SendError<ClientPacket>),
     ResponseError(RecvError),
 }
@@ -56,6 +58,8 @@ impl TryFrom<ServerPacket> for CommandResult {
     }
 }
 
+// Temp
+#[allow(dead_code)]
 pub struct ViewerConfig {
     pub x: usize,
     pub y: usize,

@@ -186,6 +186,8 @@ impl FromStr for ServerPacket {
     }
 }
 
+// Temp
+#[allow(dead_code)]
 /// A client packet, i.e. a packet sent by a client following internal communication protocol
 #[derive(Debug)]
 pub enum ClientPacket {

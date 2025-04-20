@@ -10,6 +10,8 @@ use std::{
     str::{FromStr, Utf8Error, from_utf8},
 };
 
+// Temp
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum TcpReceiveError<E> {
     Parsing(E),

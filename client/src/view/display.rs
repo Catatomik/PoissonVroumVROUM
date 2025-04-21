@@ -17,10 +17,14 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
         .build();
     let path_ressources = path.to_str().expect("Chemin invalide");
     let bg_image_path = format!("{}/aqua.png", path_ressources);
-    let bg_texture = rl.load_texture(&thread, &bg_image_path).expect(&format!(
-        "Impossible de charger l'image de background de l'aquarium : {}",
-        bg_image_path
-    ));
+    let bg_texture = rl
+        .load_texture(&thread, &bg_image_path)
+        .unwrap_or_else(|_| {
+            panic!(
+                "Impossible de charger l'image de background de l'aquarium : {}",
+                bg_image_path
+            )
+        });
 
     let fish_names = ["fish1.png", "fish2.png", "default.png"];
 
@@ -31,14 +35,14 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
         let fish_path = format!("{}/{}", path_ressources, fish);
         let texture = rl
             .load_texture(&thread, &fish_path)
-            .expect(&format!("Impossible de charger le poisson : {}", fish));
+            .unwrap_or_else(|_| panic!("Impossible de charger le poisson : {}", fish));
         map_fish_texture.insert(fish.to_string(), texture);
     }
     let default_path: String = format!("{}/default.png", path_ressources);
 
     let texture_default = rl
         .load_texture(&thread, &default_path)
-        .expect(&format!("Impossible de charger le poisson : {}", "default"));
+        .unwrap_or_else(|_| panic!("Impossible de charger le poisson : {}", "default"));
 
     let bg_source: Rectangle = Rectangle::new(
         0.0,
@@ -105,10 +109,8 @@ fn find_next_current_positions(
             fish.target_x = (new_fish.target_x * viewer_config.width as f32) / 100.0;
             fish.target_y = (new_fish.target_y * viewer_config.height as f32) / 100.0;
             current_fish_list.insert(new_fish.name.clone(), fish);
-        } else {
-            if let Some(current_fish) = current_fish_list.get_mut(&new_fish.name) {
-                find_right_position(current_fish, new_fish, dt);
-            }
+        } else if let Some(current_fish) = current_fish_list.get_mut(&new_fish.name) {
+            find_right_position(current_fish, new_fish, dt);
         }
     }
 }
@@ -119,8 +121,8 @@ fn display_fish(d: &mut RaylibDrawHandle, texture: &Texture2D, fish: Fish, rotat
     let y = fish.target_y;
     let h = fish.size_h;
     let w = fish.size_w;
-    let scale_x = w as f32 / texture.width() as f32;
-    let scale_y = h as f32 / texture.height() as f32;
+    let scale_x = w / texture.width() as f32;
+    let scale_y = h / texture.height() as f32;
     d.draw_texture_ex(
         texture,
         Vector2::new(x, y),
@@ -131,7 +133,7 @@ fn display_fish(d: &mut RaylibDrawHandle, texture: &Texture2D, fish: Fish, rotat
 }
 
 fn find_right_texture<'a>(
-    name_fish: &String,
+    name_fish: &str,
     map_fish_texture: &'a HashMap<String, Texture2D>,
     default: &'a Texture2D,
 ) -> &'a Texture2D {

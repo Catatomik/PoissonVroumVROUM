@@ -3,6 +3,7 @@
 use super::protocol::{ClientPacket, Fish, ServerPacket};
 
 use std::{
+    fmt,
     fmt::Debug,
     marker::PhantomData,
     sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
@@ -24,6 +25,8 @@ pub trait Transport<Req, Res> {
 
 #[derive(Debug)]
 pub enum FishApiError {
+    // Temp
+    #[allow(dead_code)]
     RequestError(SendError<ClientPacket>),
     ResponseError(RecvError),
 }
@@ -33,11 +36,11 @@ pub enum CommandResult {
     NOk,
 }
 
-impl ToString for CommandResult {
-    fn to_string(&self) -> String {
+impl fmt::Display for CommandResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CommandResult::Ok => String::from("OK"),
-            CommandResult::NOk => String::from("NOK"),
+            CommandResult::Ok => write!(f, "OK"),
+            CommandResult::NOk => write!(f, "NOK"),
         }
     }
 }
@@ -55,6 +58,8 @@ impl TryFrom<ServerPacket> for CommandResult {
     }
 }
 
+// Temp
+#[allow(dead_code)]
 pub struct ViewerConfig {
     pub x: usize,
     pub y: usize,
@@ -71,7 +76,7 @@ pub struct FishApi<T: Transport<ClientPacket, ServerPacket> + Send + 'static> {
 }
 
 impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
-    pub fn new<F: FnMut(ServerPacket) -> () + Send + 'static>(
+    pub fn new<F: FnMut(ServerPacket) + Send + 'static>(
         mut transport: T,
         mut response_handler: F,
     ) -> (Self, ViewerConfig) {

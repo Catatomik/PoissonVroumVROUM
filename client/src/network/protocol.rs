@@ -2,6 +2,7 @@
 
 use crate::view::entities::Fish as ViewFish;
 use std::{
+    fmt,
     str::FromStr,
     time::{Duration, Instant},
 };
@@ -42,21 +43,21 @@ impl FromStr for ServerPacket {
         let first_word = packet_parts.next().ok_or(InvalidFormat)?;
         match first_word {
             "pong" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::Pong)
                 } else {
                     Err(InvalidFormat)
                 }
             }
             "OK" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::Ok)
                 } else {
                     Err(InvalidFormat)
                 }
             }
             "NOK" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::NOk)
                 } else {
                     Err(InvalidFormat)
@@ -106,7 +107,7 @@ impl FromStr for ServerPacket {
                 }
             }
             "bye" => {
-                if let None = packet_parts.next() {
+                if packet_parts.next().is_none() {
                     Ok(ServerPacket::Bye)
                 } else {
                     Err(InvalidFormat)
@@ -185,6 +186,8 @@ impl FromStr for ServerPacket {
     }
 }
 
+// Temp
+#[allow(dead_code)]
 /// A client packet, i.e. a packet sent by a client following internal communication protocol
 #[derive(Debug)]
 pub enum ClientPacket {
@@ -206,11 +209,12 @@ pub enum ClientPacket {
 }
 
 /// Client packet serialization
-impl ToString for ClientPacket {
-    fn to_string(&self) -> String {
+impl fmt::Display for ClientPacket {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ClientPacket::Ping => String::from("ping"),
-            ClientPacket::AddFish(fish) => format!(
+            ClientPacket::Ping => write!(f, "ping"),
+            ClientPacket::AddFish(fish) => write!(
+                f,
                 "addFish {} at {}x{},{}x{}, {}",
                 fish.name,
                 fish.position_x,
@@ -219,14 +223,14 @@ impl ToString for ClientPacket {
                 fish.height,
                 fish.behavior
             ),
-            ClientPacket::DelFish(name) => format!("delFish {}", name),
-            ClientPacket::StartFish(name) => format!("startFish {}", name),
-            ClientPacket::Hello(None) => String::from("hello"),
-            ClientPacket::Hello(Some(id)) => format!("hello as in {}", id),
-            ClientPacket::GetFishes => String::from("getFishes"),
-            ClientPacket::LsFishes(_) => String::from("ls"),
-            ClientPacket::GetFishesContinuously => String::from("getFishesContinuously"),
-            ClientPacket::LogOut => String::from("log out"),
+            ClientPacket::DelFish(name) => write!(f, "delFish {}", name),
+            ClientPacket::StartFish(name) => write!(f, "startFish {}", name),
+            ClientPacket::Hello(None) => write!(f, "hello"),
+            ClientPacket::Hello(Some(id)) => write!(f, "hello as in {}", id),
+            ClientPacket::GetFishes => write!(f, "getFishes"),
+            ClientPacket::LsFishes(_) => write!(f, "ls"),
+            ClientPacket::GetFishesContinuously => write!(f, "getFishesContinuously"),
+            ClientPacket::LogOut => write!(f, "log out"),
         }
     }
 }

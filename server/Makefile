@@ -1,3 +1,6 @@
+VG ?= valgrind
+CFMT ?= clang-format
+
 SRCDIR = src
 TESTDIR = tests
 BUILDDIR = build
@@ -5,15 +8,18 @@ SRCBUILDDIR = $(BUILDDIR)/src
 TESTBUILDDIR = $(BUILDDIR)/tests
 
 CFLAGS = -Wall -Werror -I$(SRCDIR)
+CFMTFLAGS ?= -style='file:.clang-format'
+VFLAGS ?= --leak-check=full
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 SRC_OBJ = $(patsubst $(SRCDIR)/%.c, $(SRCBUILDDIR)/%.o, $(SRC))
 SRC_NO_MAIN_OBJ = $(filter-out $(SRCBUILDDIR)/main.o, $(SRC_OBJ))
 
-TEST_BINS = $(patsubst $(TESTDIR)/%.c, $(TESTBUILDDIR)/%.test, $(wildcard $(TESTDIR)/*.c))
-TEST_BINS_EXEC = $(patsubst $(TESTBUILDDIR)/%.test, %, $(TEST_BINS))
+TEST_BINS = $(patsubst $(TESTDIR)/%.c, $(TESTBUILDDIR)/%, $(wildcard $(TESTDIR)/*.c))
+TEST_BINS_EXEC = $(patsubst $(TESTBUILDDIR)/%, %.test, $(TEST_BINS))
+TEST_BINS_EXEC_VG = $(patsubst $(TESTBUILDDIR)/%, %.vg, $(TEST_BINS))
 
-all: main test
+all: main $(TEST_BINS)
 
 $(SRCBUILDDIR):
 	mkdir -p $(SRCBUILDDIR)
@@ -33,23 +39,38 @@ $(TESTBUILDDIR)/%.o: $(TESTDIR)/%.c | $(TESTBUILDDIR)
 # In order to keep intermediate files
 .PRECIOUS: $(TESTBUILDDIR)/%.o
 
-$(TESTBUILDDIR)/%.test: $(TESTBUILDDIR)/%.o $(SRC_NO_MAIN_OBJ)
+$(TESTBUILDDIR)/%: $(TESTBUILDDIR)/%.o $(SRC_NO_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Run a single test
 # Uses static pattern (https://www.gnu.org/software/make/manual/html_node/Static-Pattern.html)
 # In order to suggest a test bin to run in shell with tab
-$(TEST_BINS_EXEC): %: $(TESTBUILDDIR)/%.test
+$(TEST_BINS_EXEC): %.test: $(TESTBUILDDIR)/%
 	printf '\t- %s: ' $@
-	./$< >/dev/null && echo 'succès' || echo 'échec'
+	timeout 5 ./$< >/dev/null && echo 'succès' || echo 'échec'
 
 # Run all tests
 test: $(TEST_BINS_EXEC)
+
+# Run a single test with valgrind
+$(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
+	printf '\t- %s: ' $@
+	timeout 5 valgrind $(VFLAGS) ./$< >/dev/null 2>&1 && echo 'succès' || echo 'échec'
+
+valgrind: $(TEST_BINS_EXEC_VG)
+
+# Formats all files in source dirs (src, test)
+format:
+	$(CFMT) $(CFMTFLAGS) -i $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*.h) $(wildcard $(TESTDIR)/*.c)
+
+# Check formatting according to previous rule
+check-format:
+	$(CFMT) $(CFMTFLAGS) --dry-run --Werror $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*.h) $(wildcard $(TESTDIR)/*.c)
 
 clean:
 	rm -rf $(BUILDDIR) main
 
 # Rules that don't produce files
-.PHONY: all test clean
+.PHONY: all $(TEST_BINS_EXEC) test $(TEST_BINS_EXEC_VG) valgrind format check-format clean
 # Do not print executed commands while running tests, for cleaner output
-.SILENT: $(TEST_BINS_EXEC)
+.SILENT: $(TEST_BINS_EXEC) $(TEST_BINS_EXEC_VG)

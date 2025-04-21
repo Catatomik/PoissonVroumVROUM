@@ -41,18 +41,14 @@ jobs:
         packages: xorg-dev
     - name: Build
       run: cargo build --verbose
-    # Save built files
+    # Save built files (only dependencies, see https://github.com/Swatinem/rust-cache/tree/master?tab=readme-ov-file#cache-effectiveness)
+    # Dedicated action, more optimized
+    # Otherwise, check https://github.com/actions/cache/blob/main/examples.md#rust---cargo
     - name: Cache built files
-      uses: actions/cache/save@v4
+      uses: Swatinem/rust-cache@v2
       with:
-        # From https://github.com/actions/cache/blob/main/examples.md#rust---cargo
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          client/target/
-        key: built-client-${{ github.sha }}
+        workspaces: client -> target
+        shared-key: built-client-${{ hashFiles('client/Cargo.lock', 'client/Cargo.toml') }}
 
   # Linting would fail if it doesn't build
   # It could be run anyway, but would need to reinstall missing dependencies & build from scratch
@@ -66,17 +62,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     # Re-use previously built files
+    # There should be no cache miss, but it's not fatal
     - name: Restore built files
-      uses: actions/cache/restore@v4
+      uses: Swatinem/rust-cache@v2
       with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          client/target/
-        key: built-client-${{ github.sha }}
-        fail-on-cache-miss: true
+        workspaces: client -> target
+        shared-key: built-client-${{ hashFiles('client/Cargo.lock', 'client/Cargo.toml') }}
     # Required to build raylib ; need X11 headers
     # see https://github.com/glfw/glfw/issues/1957#issuecomment-908506994
     - name: Install build dependencies
@@ -96,17 +87,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     # Re-use previously built files
+    # There should be no cache miss, but it's not fatal
     - name: Restore built files
-      uses: actions/cache/restore@v4
+      uses: Swatinem/rust-cache@v2
       with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          client/target/
-        key: built-client-${{ github.sha }}
-        fail-on-cache-miss: true
+        workspaces: client -> target
+        shared-key: built-client-${{ hashFiles('client/Cargo.lock', 'client/Cargo.toml') }}
     # Required to build raylib ; need X11 headers
     # see https://github.com/glfw/glfw/issues/1957#issuecomment-908506994
     - name: Install build dependencies

@@ -1,0 +1,61 @@
+name: C
+
+on:
+  pull_request:
+    paths:
+      - "server/*"
+      # If this workflow changes, it will run again
+      - ".github/workflows/c.yml"
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Format
+      run: make check-format
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build (default rule)
+      run: make
+    # Save built files
+    - name: Cache built files
+      uses: actions/cache/save@v4
+      with:
+        path: server/build
+        key: built-server-${{ github.sha }}
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+    - uses: actions/checkout@v4
+    # Re-use previously built files
+    - name: Restore built files
+      uses: actions/cache/restore@v4
+      with:
+        path: server/build
+        key: built-server-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Test
+      run: make test
+    - name: Valgrind
+      run: make valgrind

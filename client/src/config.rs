@@ -9,7 +9,7 @@ use std::ffi::OsStr;
 
 pub struct Config {
     controller_address: Ipv4Addr,
-    id: String,
+    id: usize,
     controller_port: u16,
     display_timeout_value: u32,
     resources: PathBuf,
@@ -35,7 +35,9 @@ impl Config {
             controller_address: (hasmap_get(&config_map, "controller-address")?
                 .parse::<Ipv4Addr>()
                 .map_err(|_| "controller-address has to be an X.X.X.X with X between 0 and 255")?),
-            id: (hasmap_get(&config_map, "id")?),
+            id: (hasmap_get(&config_map, "id")?
+                .parse::<usize>()
+                .map_err(|_| "id has to be an Interger")?),
             controller_port: (hasmap_get(&config_map, "controller-port")?
                 .parse::<u16>()
                 .map_err(|_| "controller-port has to be an Interger")?),
@@ -54,8 +56,8 @@ impl Config {
         self.controller_port
     }
 
-    pub fn get_id(&self) -> &str {
-        self.id.as_str()
+    pub fn get_id(&self) -> usize {
+        self.id
     }
 
     pub fn get_timeout(&self) -> u32 {

@@ -3,7 +3,7 @@ name: C
 on:
   pull_request:
     paths:
-      - "server/*"
+      - "server/"
       # If this workflow changes, it will run again
       - ".github/workflows/c.yml"
 

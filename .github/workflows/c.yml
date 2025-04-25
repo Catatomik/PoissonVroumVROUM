@@ -2,6 +2,7 @@ name: C
 
 on:
   pull_request:
+    branches: [ "main" ]
     paths:
       - "server/"
       # If this workflow changes, it will run again

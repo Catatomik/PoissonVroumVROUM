@@ -52,12 +52,18 @@ $(TEST_BINS_EXEC): %.test: $(TESTBUILDDIR)/%
 # Run all tests
 test: $(TEST_BINS_EXEC)
 
+ci_test:
+	@make test | grep 'échec' && false
+
 # Run a single test with valgrind
 $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 	printf '\t- %s: ' $@
 	timeout 5 valgrind $(VFLAGS) ./$< >/dev/null 2>&1 && echo 'succès' || echo 'échec'
 
 valgrind: $(TEST_BINS_EXEC_VG)
+
+ci_valgrind:
+	@make valgrind | grep 'échec' && false
 
 # Formats all files in source dirs (src, test)
 format:
@@ -71,6 +77,6 @@ clean:
 	rm -rf $(BUILDDIR) main
 
 # Rules that don't produce files
-.PHONY: all $(TEST_BINS_EXEC) test $(TEST_BINS_EXEC_VG) valgrind format check-format clean
+.PHONY: all $(TEST_BINS_EXEC) test ci_test $(TEST_BINS_EXEC_VG) valgrind ci-valgrind format check-format clean
 # Do not print executed commands while running tests, for cleaner output
 .SILENT: $(TEST_BINS_EXEC) $(TEST_BINS_EXEC_VG)

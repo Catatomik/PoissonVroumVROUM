@@ -25,14 +25,14 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
 
         match main_command {
             "status" => {
-                if let None = command_parts.next() {
+                if command_parts.next().is_none() {
                     status();
                 } else {
                     println!("Usage: status");
                 }
             }
             "help" => {
-                if let None = command_parts.next() {
+                if command_parts.next().is_none() {
                     help();
                 } else {
                     println!("Usage: help");
@@ -107,7 +107,7 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
                 }
             }
             "quit" => {
-                if let None = command_parts.next() {
+                if command_parts.next().is_none() {
                     break;
                 } else {
                     println!("Usage: quit");
@@ -154,7 +154,7 @@ fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
         behavior: String::from(behavior),
     };
     match fish_api.add_fish(new_fish) {
-        Ok(res) => println!("    => {}", res.to_string()),
+        Ok(res) => println!("    => {}", res),
         Err(FishApiError::ResponseError(_)) => {
             eprintln!("Error while getting response for addFish request")
         }
@@ -167,7 +167,7 @@ fn del_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     name: &str,
 ) {
     match fish_api.del_fish(String::from(name)) {
-        Ok(res) => println!("    => {}", res.to_string()),
+        Ok(res) => println!("    => {}", res),
         Err(FishApiError::ResponseError(_)) => {
             eprintln!("Error while getting response for delFish request")
         }
@@ -180,7 +180,7 @@ fn start_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     name: &str,
 ) {
     match fish_api.start_fish(String::from(name)) {
-        Ok(res) => println!("    => {}", res.to_string()),
+        Ok(res) => println!("    => {}", res),
         Err(FishApiError::ResponseError(_)) => {
             eprintln!("Error while getting response for startFish request")
         }

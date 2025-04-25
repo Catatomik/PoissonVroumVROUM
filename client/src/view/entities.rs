@@ -25,7 +25,7 @@ impl Fish {
             target_y,
             size_w,
             size_h,
-            timestamp: timestamp,
+            timestamp,
             is_started,
         }
     }

@@ -1,4 +1,5 @@
 #include "connexion.h"
+#include "fishes.h"
 #include "parse_cfg.h"
 #include "parse_viewers_config.h"
 #include "utils.h"
@@ -75,8 +76,8 @@ int add(char *input) {
             return 1;
         }
     }
-    viewers_config.viewers_configs[viewers_config.viewers_count] = newViewer;
-    viewers_config.viewers_count += 1;
+    add_viewer_config(&viewers_config, newViewer.id, newViewer.x, newViewer.y,
+                      newViewer.width, newViewer.height);
 
     printf("view added\n");
     return 0;
@@ -104,6 +105,10 @@ int del(char *input) {
         if (viewers_config.viewers_configs[i].id == id) {
             if (overwrite(i) != 0)
                 return 1;
+            viewers_config.viewers_configs = realloc(
+                viewers_config.viewers_configs,
+                sizeof(struct viewer_config_t) * viewers_config.viewers_count);
+
             printf("view N%d deleted\n", id);
             return 0;
         }
@@ -121,7 +126,7 @@ int save(char *input) {
         return 1;
     }
 
-    FILE *filefd = fopen(input + 1, "w");
+    FILE *filefd = fopen(input, "w");
 
     if (filefd == NULL) {
         perror("Erreur lors de l'ouverture du fichier\n");

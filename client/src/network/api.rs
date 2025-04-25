@@ -1,7 +1,7 @@
 //! General API to communicate trough a [transport] using [protocol]
 
 use super::protocol::{ClientPacket, Fish, ServerPacket};
-
+use crate::config::Config;
 use std::{
     fmt,
     fmt::Debug,
@@ -78,6 +78,7 @@ pub struct FishApi<T: Transport<ClientPacket, ServerPacket> + Send + 'static> {
 impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
     pub fn new<F: FnMut(ServerPacket) + Send + 'static>(
         mut transport: T,
+        config: &Config,
         mut response_handler: F,
     ) -> (Self, ViewerConfig) {
         let (request_tx, request_rx) = channel::<ClientPacket>();
@@ -85,7 +86,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
 
         // Handshake, blocking
         transport
-            .try_send(ClientPacket::Hello(None))
+            .try_send(ClientPacket::Hello(Some(config.get_id())))
             .expect("Unable to send hello");
         // Wait for greeting from servers
         let viewer_config = loop {

@@ -44,4 +44,8 @@ int viewers_config_from_file(struct viewers_config_t *config,
 // free the internals of the viewers_config_t
 void viewers_config_free_internals(struct viewers_config_t *config);
 
+// add a viewers to config
+void add_viewer_config(struct viewers_config_t *config, int id, int x, int y,
+                       int width, int height);
+
 #endif /* _PARSE_VIEWERS_CONFIG_H_ */

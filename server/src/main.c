@@ -27,8 +27,14 @@ int load(char *input) {
         printf("No path to viewer config given\n");
         return 1;
     }
-    if (viewers_config_from_file(&viewers_config, input) != 0)
+    struct viewers_config_t backup = viewers_config;
+    if (viewers_config_from_file(&viewers_config, input) != 0) {
+        viewers_config = backup;
         return 1;
+    }
+
+    // free old config
+    viewers_config_free_internals(&backup);
 
     // remove all fishes from last configuration
     remove_all_fishes();

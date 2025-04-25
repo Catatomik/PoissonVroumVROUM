@@ -54,6 +54,7 @@ fn main() {
 
     let (mut fish_api, viewer_config) = FishApi::new(
         TcpClient::new(SocketAddrV4::new(config.get_address(), config.get_port())),
+        &config,
         {
             let mut fishes = fishes.clone();
             move |p| handle_packet(&mut fishes, p)

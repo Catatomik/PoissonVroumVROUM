@@ -164,6 +164,7 @@ int repl_handler(char *input) {
 }
 
 int main(int argc, char **argv) {
+    printf("ceci est un test\n");
     UNUSED(argc);
     UNUSED(argv);
 

@@ -44,6 +44,7 @@ pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: Serve
 }
 
 fn main() {
+    println!("test");
     let cli = Cli::parse();
 
     let config = Config::new(&cli.config).unwrap();

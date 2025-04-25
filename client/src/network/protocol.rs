@@ -226,7 +226,7 @@ impl fmt::Display for ClientPacket {
             ClientPacket::DelFish(name) => write!(f, "delFish {}", name),
             ClientPacket::StartFish(name) => write!(f, "startFish {}", name),
             ClientPacket::Hello(None) => write!(f, "hello"),
-            ClientPacket::Hello(Some(id)) => write!(f, "hello as in {}", id),
+            ClientPacket::Hello(Some(id)) => write!(f, "hello as in N{}", id),
             ClientPacket::GetFishes => write!(f, "getFishes"),
             ClientPacket::LsFishes(_) => write!(f, "ls"),
             ClientPacket::GetFishesContinuously => write!(f, "getFishesContinuously"),

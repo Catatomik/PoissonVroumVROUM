@@ -63,9 +63,9 @@ fn main() {
     // Temp ping to check API connection
     fish_api.ping().unwrap();
 
-    // Start display
-    thread::spawn(move || view::display::display(fishes, viewer_config, config.get_resources()));
-
     // Start loop of the app
-    command_loop(fish_api);
+    thread::spawn(move || command_loop(fish_api));
+
+    // Start display
+    view::display::display(fishes, viewer_config, config.get_resources());
 }

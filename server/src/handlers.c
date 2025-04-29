@@ -71,8 +71,11 @@ int list(char *send_buffer, size_t send_buffer_capacity) {
         // should check if fish is in the view
         snprintf(send_buffer + strlen(send_buffer),
                  send_buffer_capacity - strlen(send_buffer),
-                 "%s at [%fx%f,%fx%f,%f]", fish->name, fish->target_x,
-                 fish->target_y, fish->width, fish->height, fish->time_left);
+                 "%s at [%dx%d,%dx%d,%d]", fish->name, (int)fish->target_x,
+                 (int)fish->target_y, (int)fish->width, (int)fish->height,
+                 (int)fish->time_left);
+
+        fish = next_fish(fish);
     }
     snprintf(send_buffer + strlen(send_buffer),
              send_buffer_capacity - strlen(send_buffer), "\n");
@@ -149,6 +152,7 @@ int responseToAdd(char *args, size_t args_len, char *send_buffer,
             snprintf(send_buffer, send_buffer_capacity, "NOK\n");
             return 1;
         }
+        existedFish = next_fish(existedFish);
     }
 
     add_fish(newFish);
@@ -179,6 +183,7 @@ int responseToDel(char *args, size_t args_len, char *send_buffer,
             snprintf(send_buffer, send_buffer_capacity, "OK\n");
             return 0;
         }
+        existedFish = next_fish(existedFish);
     }
     snprintf(send_buffer, send_buffer_capacity, "NOK\n");
     return 0;
@@ -209,6 +214,7 @@ int responseToStrat(char *args, size_t args_len, char *send_buffer,
             snprintf(send_buffer, send_buffer_capacity, "OK\n");
             return 0;
         }
+        existedFish = next_fish(existedFish);
     }
     snprintf(send_buffer, send_buffer_capacity, "NOK\n");
     return 0;
@@ -227,7 +233,7 @@ int handle_client_request(struct viewer_config_t **viewer_config,
         return greeting(viewer_config, receive_buffer + 6, receive_buffer_len,
                         send_buffer, send_buffer_capacity);
     }
-    if (strncmp(receive_buffer, "getFish", 7) == 0) {
+    if (strncmp(receive_buffer, "getFishes", 7) == 0) {
         return list(send_buffer, send_buffer_capacity);
     }
     /* if (strncmp(receive_buffer, "ls", 2) == 0) { */

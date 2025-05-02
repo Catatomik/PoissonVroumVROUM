@@ -74,7 +74,7 @@ void *thread_function_client(void *args) {
 
     // TODO replace 1 by singal ctrl+c
     while (1) {
-    //while (write(client_sockfd, "", 0) != -1) {
+        // while (write(client_sockfd, "", 0) != -1) {
 
         int n = read(client_sockfd, receive_buffer + receive_buffer_len,
                      RECEIVE_BUFFER_CAPACITY - receive_buffer_len - 1);
@@ -105,9 +105,8 @@ void *thread_function_client(void *args) {
                 if (n < 0)
                     error("ERROR writing to socket");
 
-                //send_buffer[send_length] = '\0';
-                //printf("[DEBUG] sending '%s'\n", send_buffer);
-
+                // send_buffer[send_length] = '\0';
+                // printf("[DEBUG] sending '%s'\n", send_buffer);
             }
         }
     }

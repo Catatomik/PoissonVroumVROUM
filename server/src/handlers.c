@@ -75,8 +75,8 @@ int list(struct viewer_config_t **assigned_config, char *send_buffer,
 
     int x_min = 0;
     int y_min = 0;
-    int x_max = 500;
-    int y_max = 500;
+    int x_max = 0;
+    int y_max = 0;
 
     if (*assigned_config != NULL) {
         x_min = (*assigned_config)->x;
@@ -87,8 +87,8 @@ int list(struct viewer_config_t **assigned_config, char *send_buffer,
 
     while (fish != NULL) {
         // should check if fish is in the view
-        if (fish->current_x > x_min && fish->current_x < x_max &&
-            fish->current_y > y_min && fish->current_y < y_max) {
+        if (fish->current_x >= x_min && fish->current_x <= x_max &&
+            fish->current_y >= y_min && fish->current_y <= y_max) {
             snprintf(send_buffer + strlen(send_buffer),
                      send_buffer_capacity - strlen(send_buffer),
                      "%s at [%dx%d,%dx%d,%d]", fish->name, (int)fish->target_x,

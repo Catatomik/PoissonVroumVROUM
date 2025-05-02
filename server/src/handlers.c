@@ -9,6 +9,11 @@
 
 #define SEND_BUFFER_CAPACITY 512
 
+struct config_and_send_t {
+    struct viewer_config_t **assigned_config;
+    char *send_buffer;
+};
+
 /**
  * write the response to given hello command in send_buffer
  *
@@ -64,16 +69,32 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
     return 0;
 }
 
-int list(char *send_buffer, size_t send_buffer_capacity) {
+int list(struct viewer_config_t **assigned_config, char *send_buffer,
+         size_t send_buffer_capacity) {
     struct fish_t *fish = next_fish(NULL);
+
+    int x_min = 0;
+    int y_min = 0;
+    int x_max = 500;
+    int y_max = 500;
+
+    if (*assigned_config != NULL) {
+        x_min = (*assigned_config)->x;
+        y_min = (*assigned_config)->y;
+        x_max = (*assigned_config)->x + (*assigned_config)->width;
+        y_max = (*assigned_config)->y + (*assigned_config)->height;
+    }
 
     while (fish != NULL) {
         // should check if fish is in the view
-        snprintf(send_buffer + strlen(send_buffer),
-                 send_buffer_capacity - strlen(send_buffer),
-                 "%s at [%dx%d,%dx%d,%d]", fish->name, (int)fish->target_x,
-                 (int)fish->target_y, (int)fish->width, (int)fish->height,
-                 (int)fish->time_left);
+        if (fish->current_x > x_min && fish->current_x < x_max &&
+            fish->current_y > y_min && fish->current_y < y_max) {
+            snprintf(send_buffer + strlen(send_buffer),
+                     send_buffer_capacity - strlen(send_buffer),
+                     "%s at [%dx%d,%dx%d,%d]", fish->name, (int)fish->target_x,
+                     (int)fish->target_y, (int)fish->width, (int)fish->height,
+                     (int)fish->time_left);
+        }
 
         fish = next_fish(fish);
     }
@@ -87,10 +108,12 @@ int list(char *send_buffer, size_t send_buffer_capacity) {
 //     strcpy(server_response, "not yet listls");
 // }
 
-void *actualList(void *arg) {
-    char *send_buffer = (char *)arg;
+void *actualList(void *args) {
+    struct config_and_send_t *arguments = (struct config_and_send_t *)args;
+    char *send_buffer = arguments->send_buffer;
+    struct viewer_config_t **assigned_config = arguments->assigned_config;
     while (true) {
-        list(send_buffer, SEND_BUFFER_CAPACITY);
+        list(assigned_config, send_buffer, SEND_BUFFER_CAPACITY);
     }
     return NULL;
 }
@@ -234,15 +257,19 @@ int handle_client_request(struct viewer_config_t **viewer_config,
                         send_buffer, send_buffer_capacity);
     }
     if (strncmp(receive_buffer, "getFishes", 7) == 0) {
-        return list(send_buffer, send_buffer_capacity);
+        return list(viewer_config, send_buffer, send_buffer_capacity);
     }
     /* if (strncmp(receive_buffer, "ls", 2) == 0) { */
-    /*   return listls(receive_buffer + 3, receive_buffer_len, send_buffer, */
+    /*   return listls(viewer_config, receive_buffer + 3, receive_buffer_len,
+     * send_buffer, */
     /* 		send_buffer_capacity); */
     /* } */
     if (strncmp(receive_buffer, "getFishesContinuously", 21) == 0) {
+        struct config_and_send_t args = {.assigned_config = viewer_config,
+                                         .send_buffer = send_buffer};
+        struct config_and_send_t *pargs = &args;
         pthread_create(&thread_getFish_constinously, NULL, actualList,
-                       (void *)send_buffer);
+                       (void *)pargs);
         pthread_detach(thread_getFish_constinously);
         // return actualList( send_buffer,send_buffer_capacity);
     }

@@ -88,9 +88,9 @@ void *thread_function_client(void *args) {
             printf("The message from client %d: %s\n", thread_id,
                    receive_buffer);
             memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
-            if (handle_client_request(&viewer_config, receive_buffer,
-                                      receive_buffer_len, send_buffer,
-                                      SEND_BUFFER_CAPACITY)) {
+            if (handle_client_request(client_sockfd, &viewer_config,
+                                      receive_buffer, receive_buffer_len,
+                                      send_buffer, SEND_BUFFER_CAPACITY)) {
                 fprintf(stderr, "Error handling client request\n");
                 // TODO: handle it ?
             } else {

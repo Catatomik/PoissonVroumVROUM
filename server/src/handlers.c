@@ -2,9 +2,11 @@
 #include "config.h"
 #include "fishes.h"
 #include "parse_viewers_config.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /**
  * write the response to given hello command in send_buffer
@@ -88,6 +90,36 @@ err:
     return -1;
 }
 
+void *get_fishes_continuously_start(void *args) {
+    int fd = (long)args;
+    printf("[LOG] starting get_fishes_continuously thread for fd %d\n", fd);
+
+    char send_buffer[1024] = {0};
+    while (write(fd, "", 0) != -1) {
+        get_fishes(NULL, 0, send_buffer, 1024);
+        size_t send_length = strnlen(send_buffer, 1024);
+        if (send_length > 0) {
+            int n = write(fd, send_buffer, send_length);
+            if (n < 0)
+                fprintf(stderr, "[ERR] ERROR writing to socket");
+            send_buffer[send_length] = '\0';
+            printf("[DEBUG] sending '%s'\n", send_buffer);
+        }
+        sleep(3);
+    }
+    return 0;
+}
+
+int get_fishes_continuously(int fd, char *args, size_t args_len,
+                            char *send_buffer, size_t send_buffer_capacity) {
+    pthread_t thread_get_fishes_continuously;
+    pthread_create(&thread_get_fishes_continuously, NULL,
+                   get_fishes_continuously_start, (void *)(long)fd);
+    pthread_detach(thread_get_fishes_continuously);
+
+    return get_fishes(args, args_len, send_buffer, send_buffer_capacity);
+}
+
 // void listls(char *args, size_t args_len, char *send_buffer,size_t
 // send_buffer_capacity) {
 //     strcpy(server_response, "not yet listls");
@@ -133,7 +165,7 @@ int pong(char *args, size_t args_len, char *send_buffer,
 //     strcpy(server_response, "not yet responseToStart");
 // }
 
-int handle_client_request(struct viewer_config_t **viewer_config,
+int handle_client_request(int fd, struct viewer_config_t **viewer_config,
                           char *receive_buffer, size_t receive_buffer_len,
                           char *send_buffer, size_t send_buffer_capacity) {
     // printf("%s\n", receive_buffer);
@@ -145,9 +177,14 @@ int handle_client_request(struct viewer_config_t **viewer_config,
         return greeting(viewer_config, receive_buffer + 6, receive_buffer_len,
                         send_buffer, send_buffer_capacity);
     }
-    if (strncmp(receive_buffer, "getFishes", 9) == 0) {
-        return get_fishes(receive_buffer + 10, receive_buffer_len, send_buffer,
+    if (strncmp(receive_buffer, "getFishes\n", 10) == 0) {
+        return get_fishes(receive_buffer + 11, receive_buffer_len, send_buffer,
                           send_buffer_capacity);
+    }
+    if (strncmp(receive_buffer, "getFishesContinuously", 21) == 0) {
+        return get_fishes_continuously(fd, receive_buffer + 22,
+                                       receive_buffer_len, send_buffer,
+                                       send_buffer_capacity);
     }
     /* if (strncmp(receive_buffer, "ls", 2) == 0) { */
     /*   return listls(receive_buffer + 3, receive_buffer_len, send_buffer, */

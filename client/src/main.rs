@@ -61,7 +61,7 @@ fn main() {
         },
     );
     // Temp ping to check API connection
-    fish_api.ping().unwrap();
+    fish_api.start().unwrap();
 
     // Start loop of the app
     thread::spawn(move || command_loop(fish_api));

@@ -167,10 +167,11 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         )
     }
 
-    // Ping must be non-blocking, hence treated in `response_handler` of FishAPI
-    pub fn ping(&mut self) -> Result<(), FishApiError> {
+    /// Start receiving fishes.
+    /// Should be called only once!
+    pub fn start(&mut self) -> Result<(), FishApiError> {
         self.request_tx
-            .send(ClientPacket::Ping)
+            .send(ClientPacket::GetFishesContinuously)
             .map_err(FishApiError::RequestError)
     }
 

@@ -140,7 +140,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     if let Err(e) = transport.try_send(req) {
                         // Error on transport send
                         // Do not break or panic, just to keep going
-                        eprintln!("{:?}", e);
+                        eprintln!("Error when sending to transport {:?}", e);
                     }
                 }
 
@@ -148,7 +148,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                 match transport.try_receive() {
                     Ok(Some(p @ (ServerPacket::Ok | ServerPacket::NOk))) => {
                         if let Err(e) = response_tx.send(CommandResult::try_from(p).unwrap()) {
-                            eprintln!("{:?}", e);
+                            eprintln!("Error when sending to transport {:?}", e);
                         }
                     }
                     Ok(Some(p)) => response_handler(p),
@@ -159,7 +159,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     Err(e) => {
                         // Error transport on receive
                         // Do not break or panic, just to keep going
-                        eprintln!("{:?}", e);
+                        eprintln!("Error when receiving from transport: {:?}", e);
                     }
                 };
 

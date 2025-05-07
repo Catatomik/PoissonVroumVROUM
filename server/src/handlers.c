@@ -1,5 +1,6 @@
 #include "handlers.h"
 #include "config.h"
+#include "fishes.h"
 #include "parse_viewers_config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,10 +61,32 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
     return 0;
 }
 
-// void list(char *args, size_t args_len, char *send_buffer,
-//          size_t send_buffer_capacity) {
-//     strcpy(server_response, "not yet list");
-// }
+int get_fishes(char *args, size_t args_len, char *send_buffer,
+               size_t send_buffer_capacity) {
+    int printed_count = snprintf(send_buffer, send_buffer_capacity, "list");
+    if (printed_count > send_buffer_capacity)
+        goto err;
+
+    struct fish_t *f = next_fish(NULL);
+    while (f != NULL) {
+        printed_count += snprintf(
+            send_buffer + printed_count, send_buffer_capacity - printed_count,
+            " [%s at %fx%f,%fx%f,%f]", f->name, f->target_x, f->target_y,
+            f->width, f->height, f->time_left);
+        if (printed_count > send_buffer_capacity)
+            goto err;
+        f = next_fish(f);
+    }
+    send_buffer[printed_count] = '\n';
+    return 0;
+
+err:
+    fprintf(stderr,
+            "[ERR] response would have overran send_buffer (len=%zu) because "
+            "of arg len=%d\n",
+            send_buffer_capacity, printed_count);
+    return -1;
+}
 
 // void listls(char *args, size_t args_len, char *send_buffer,size_t
 // send_buffer_capacity) {
@@ -122,10 +145,10 @@ int handle_client_request(struct viewer_config_t **viewer_config,
         return greeting(viewer_config, receive_buffer + 6, receive_buffer_len,
                         send_buffer, send_buffer_capacity);
     }
-    /* if (strncmp(receive_buffer, "getFish", 7) == 0) { */
-    /*   return list(receive_buffer + 8, receive_buffer_len, send_buffer, */
-    /* 		send_buffer_capacity); */
-    /* } */
+    if (strncmp(receive_buffer, "getFishes", 9) == 0) {
+        return get_fishes(receive_buffer + 10, receive_buffer_len, send_buffer,
+                          send_buffer_capacity);
+    }
     /* if (strncmp(receive_buffer, "ls", 2) == 0) { */
     /*   return listls(receive_buffer + 3, receive_buffer_len, send_buffer, */
     /* 		send_buffer_capacity); */

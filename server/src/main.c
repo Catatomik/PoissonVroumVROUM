@@ -190,6 +190,16 @@ int main(int argc, char **argv) {
                         .time_left = 3};
     add_fish(f1);
 
+    struct fish_t f2 = {.name = "bloblo",
+                        .current_x = 5,
+                        .current_y = 3,
+                        .width = 4,
+                        .height = 4,
+                        .target_x = 8,
+                        .target_y = 9,
+                        .time_left = 3};
+    add_fish(f2);
+
     pthread_t thread_connexion;
     pthread_create(&thread_connexion, NULL, start, NULL);
     pthread_detach(thread_connexion);

@@ -37,4 +37,7 @@ void remove_all_fishes();
 // moves the fishes
 void run_sea();
 
+// for debugging purposes
+void print_fishes();
+
 #endif //__FISHES_H__

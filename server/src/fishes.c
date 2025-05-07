@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAX_FISH_TARGET_TIME 10
+
 // declare struct for a head of list of elem's
 TAILQ_HEAD(fishes_list_t, fish_t);
 
@@ -17,8 +19,10 @@ pthread_mutex_t fishes_list_lock = PTHREAD_MUTEX_INITIALIZER;
 int add_fish(struct fish_t fish) {
     pthread_mutex_lock(&fishes_list_lock);
 
-    if (!initialized)
+    if (!initialized) {
         TAILQ_INIT(&fishes);
+        initialized = true;
+    }
 
     struct fish_t *fn = malloc(sizeof(struct fish_t));
     if (fn == NULL) {
@@ -57,6 +61,13 @@ int remove_fish_by_name(char *name) {
     return 1;
 }
 
+void print_fishes() {
+    pthread_mutex_lock(&fishes_list_lock);
+    struct fish_t *f;
+    TAILQ_FOREACH(f, &fishes, _next) { fprintf(stderr, "fish %s\n", f->name); }
+    pthread_mutex_unlock(&fishes_list_lock);
+}
+
 struct fish_t *next_fish(struct fish_t *f) {
     if (f == NULL)
         return TAILQ_FIRST(&fishes);
@@ -64,27 +75,19 @@ struct fish_t *next_fish(struct fish_t *f) {
 }
 
 void remove_all_fishes() {
-    pthread_mutex_lock(&fishes_list_lock);
-    struct fish_t *old_fish = NULL;
-    struct fish_t *f;
-    while ((f = next_fish(old_fish))) {
-        if (old_fish != NULL) {
-            remove_fish(old_fish);
-        }
-        old_fish = f;
-    }
-    pthread_mutex_unlock(&fishes_list_lock);
+    while (!TAILQ_EMPTY(&fishes))
+        remove_fish(next_fish(NULL));
 }
 
 void run_sea() {
     while (true) {
+        pthread_mutex_lock(&fishes_list_lock);
         struct fish_t *f;
         TAILQ_FOREACH(f, &fishes, _next) {
-            pthread_mutex_lock(&fishes_list_lock);
             printf("fish %s | time left: %f\n", f->name, f->time_left);
-            if (f->time_left <= 0.) {
+            if (f->time_left - 1. <= 0.) {
                 printf("[LOG] timer hit 0, getting a new target\n");
-                f->time_left = rand() % 5;
+                f->time_left = rand() % MAX_FISH_TARGET_TIME + 1;
                 f->target_x = (float)rand() / RAND_MAX;
                 f->target_y = (float)rand() / RAND_MAX;
                 printf("[LOG] new target (%f, %f) in %f\n", f->target_x,

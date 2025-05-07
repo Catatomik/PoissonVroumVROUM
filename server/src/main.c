@@ -28,8 +28,17 @@ int load(char *input) {
         printf("No path to viewer config given\n");
         return 1;
     }
-    if (viewers_config_from_file(&viewers_config, input) != 0)
+    struct viewers_config_t backup = viewers_config;
+    if (viewers_config_from_file(&viewers_config, input) != 0) {
+        viewers_config = backup;
         return 1;
+    }
+
+    // free old config
+    viewers_config_free_internals(&backup);
+
+    // remove all fishes from last configuration
+    remove_all_fishes();
 
     printf("aquarium loaded (%d display view!)\n",
            viewers_config.viewers_count);
@@ -67,8 +76,8 @@ int add(char *input) {
             return 1;
         }
     }
-    viewers_config.viewers_configs[viewers_config.viewers_count] = newViewer;
-    viewers_config.viewers_count += 1;
+    add_viewer_config(&viewers_config, newViewer.id, newViewer.x, newViewer.y,
+                      newViewer.width, newViewer.height);
 
     printf("view added\n");
     return 0;
@@ -96,6 +105,10 @@ int del(char *input) {
         if (viewers_config.viewers_configs[i].id == id) {
             if (overwrite(i) != 0)
                 return 1;
+            viewers_config.viewers_configs = realloc(
+                viewers_config.viewers_configs,
+                sizeof(struct viewer_config_t) * viewers_config.viewers_count);
+
             printf("view N%d deleted\n", id);
             return 0;
         }
@@ -113,7 +126,7 @@ int save(char *input) {
         return 1;
     }
 
-    FILE *filefd = fopen(input + 1, "w");
+    FILE *filefd = fopen(input, "w");
 
     if (filefd == NULL) {
         perror("Erreur lors de l'ouverture du fichier\n");

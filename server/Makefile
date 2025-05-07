@@ -7,7 +7,7 @@ BUILDDIR = build
 SRCBUILDDIR = $(BUILDDIR)/src
 TESTBUILDDIR = $(BUILDDIR)/tests
 
-CFLAGS = -Wall -Werror -I$(SRCDIR)
+CFLAGS = -Wall -Werror -I$(SRCDIR) -pthread
 CFMTFLAGS ?= -style='file:.clang-format'
 VFLAGS ?= --leak-check=full
 

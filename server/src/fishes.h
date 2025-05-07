@@ -34,4 +34,7 @@ struct fish_t *next_fish(struct fish_t *f);
 // clears all the fishes
 void remove_all_fishes();
 
+// moves the fishes
+void run_sea();
+
 #endif //__FISHES_H__

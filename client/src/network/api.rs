@@ -3,12 +3,11 @@
 use super::protocol::{ClientPacket, Fish, ServerPacket};
 use crate::config::Config;
 use std::{
-    fmt,
-    fmt::Debug,
+    fmt::{self, Debug},
     marker::PhantomData,
     sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
     thread::{sleep, spawn},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 /// A non-blocking transport
@@ -115,8 +114,20 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             sleep(Duration::from_millis(100));
         };
 
+        let keepalive_interval = Duration::from_secs(config.get_timeout() as u64);
+        // Assume first ping should happen `keepalive_interval` after handshake
+        let mut last_keepalive = Instant::now();
+
         spawn(move || {
             loop {
+                if last_keepalive.elapsed() >= keepalive_interval {
+                    if let Err(e) = transport.try_send(ClientPacket::Ping) {
+                        eprintln!("Unable to send keepalive: {:?}", e);
+                    } else {
+                        last_keepalive = Instant::now()
+                    }
+                }
+
                 // Treat packet to send through transport, if any
                 if let Some(req) = match request_rx.try_recv() {
                     Ok(req) => Some(req),

@@ -51,6 +51,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install test dependencies
+      run: apt-get install -y valgrind
     # Re-use previously built files
     - name: Restore built files
       uses: actions/cache/restore@v4

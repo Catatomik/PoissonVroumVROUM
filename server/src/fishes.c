@@ -1,4 +1,5 @@
 #include "fishes.h"
+#include "config.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -88,8 +89,9 @@ void run_sea() {
             if (f->time_left - 1. <= 0.) {
                 // printf("[LOG] timer hit 0, getting a new target\n");
                 f->time_left = rand() % MAX_FISH_TARGET_TIME + 1;
-                f->target_x = (float)rand() / RAND_MAX;
-                f->target_y = (float)rand() / RAND_MAX;
+                f->target_x = ((float)rand() / RAND_MAX) * viewers_config.width;
+                f->target_y =
+                    ((float)rand() / RAND_MAX) * viewers_config.height;
                 // printf("[LOG] new target (%f, %f) in %f\n", f->target_x,
                 //        f->target_y, f->time_left);
             }

@@ -3,12 +3,11 @@
 use super::protocol::{ClientPacket, Fish, ServerPacket};
 use crate::config::Config;
 use std::{
-    fmt,
-    fmt::Debug,
+    fmt::{self, Debug},
     marker::PhantomData,
     sync::mpsc::{Receiver, RecvError, SendError, Sender, TryRecvError, channel},
     thread::{sleep, spawn},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 /// A non-blocking transport
@@ -115,8 +114,20 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
             sleep(Duration::from_millis(100));
         };
 
+        let keepalive_interval = Duration::from_secs(config.get_timeout() as u64);
+        // Assume first ping should happen `keepalive_interval` after handshake
+        let mut last_keepalive = Instant::now();
+
         spawn(move || {
             loop {
+                if last_keepalive.elapsed() >= keepalive_interval {
+                    if let Err(e) = transport.try_send(ClientPacket::Ping) {
+                        eprintln!("Unable to send keepalive: {:?}", e);
+                    } else {
+                        last_keepalive = Instant::now()
+                    }
+                }
+
                 // Treat packet to send through transport, if any
                 if let Some(req) = match request_rx.try_recv() {
                     Ok(req) => Some(req),
@@ -129,7 +140,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     if let Err(e) = transport.try_send(req) {
                         // Error on transport send
                         // Do not break or panic, just to keep going
-                        eprintln!("{:?}", e);
+                        eprintln!("Error when sending to transport {:?}", e);
                     }
                 }
 
@@ -137,7 +148,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                 match transport.try_receive() {
                     Ok(Some(p @ (ServerPacket::Ok | ServerPacket::NOk))) => {
                         if let Err(e) = response_tx.send(CommandResult::try_from(p).unwrap()) {
-                            eprintln!("{:?}", e);
+                            eprintln!("Error when sending to transport {:?}", e);
                         }
                     }
                     Ok(Some(p)) => response_handler(p),
@@ -148,7 +159,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                     Err(e) => {
                         // Error transport on receive
                         // Do not break or panic, just to keep going
-                        eprintln!("{:?}", e);
+                        eprintln!("Error when receiving from transport: {:?}", e);
                     }
                 };
 
@@ -167,10 +178,11 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         )
     }
 
-    // Ping must be non-blocking, hence treated in `response_handler` of FishAPI
-    pub fn ping(&mut self) -> Result<(), FishApiError> {
+    /// Start receiving fishes.
+    /// Should be called only once!
+    pub fn start(&mut self) -> Result<(), FishApiError> {
         self.request_tx
-            .send(ClientPacket::Ping)
+            .send(ClientPacket::GetFishesContinuously)
             .map_err(FishApiError::RequestError)
     }
 

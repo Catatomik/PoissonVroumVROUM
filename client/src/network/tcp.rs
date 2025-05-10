@@ -87,7 +87,7 @@ where
                 .map_err(Self::ResponseError::Parsing);
 
         // Remove read line
-        self.buf.splice(..=newline_idx, []);
+        self.buf.drain(..=newline_idx);
 
         res
     }

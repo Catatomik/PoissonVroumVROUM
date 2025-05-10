@@ -143,6 +143,7 @@ void *get_fishes_continuously_start(void *gargs) {
             printf("[DEBUG] sending '%s'\n", send_buffer);
         }
         sleep(3);
+        memset(send_buffer, 0, 1024);
     }
 
     free(gargs); // ugly but since the thread is detached, It's necessary

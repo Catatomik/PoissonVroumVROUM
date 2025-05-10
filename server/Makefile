@@ -53,7 +53,8 @@ $(TEST_BINS_EXEC): %.test: $(TESTBUILDDIR)/%
 test: $(TEST_BINS_EXEC)
 
 ci-test:
-	@make test | grep 'échec' && false
+# Revert matching, from https://stackoverflow.com/a/75086890
+	@make test | grep -vzq 'échec'
 
 # Run a single test with valgrind
 $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
@@ -63,7 +64,7 @@ $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 valgrind: $(TEST_BINS_EXEC_VG)
 
 ci-valgrind:
-	@make valgrind | grep 'échec' && false
+	@make valgrind | grep -vzq 'échec'
 
 # Formats all files in source dirs (src, test)
 format:

@@ -2,11 +2,19 @@
 #include "config.h"
 #include "fishes.h"
 #include "parse_viewers_config.h"
+#include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define SEND_BUFFER_CAPACITY 512
+
+struct config_and_send_t {
+    struct viewer_config_t **assigned_config;
+    char *send_buffer;
+};
 
 /**
  * write the response to given hello command in send_buffer
@@ -63,8 +71,11 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
     return 0;
 }
 
-int get_fishes(char *args, size_t args_len, char *send_buffer,
+int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
                size_t send_buffer_capacity) {
+    assert(viewer_config !=
+           NULL); // cannot send to a viewer which doesn't exist
+
     int printed_count = snprintf(send_buffer, send_buffer_capacity, "list");
     if (printed_count > send_buffer_capacity)
         goto err;
@@ -90,16 +101,22 @@ err:
     return -1;
 }
 
-void *get_fishes_continuously_start(void *args) {
-    int fd = (long)args;
-    printf("[LOG] starting get_fishes_continuously thread for fd %d\n", fd);
+struct continuously_thread_args {
+    int fd;
+    struct viewer_config_t *viewer_config;
+};
+void *get_fishes_continuously_start(void *gargs) {
+    assert(gargs != NULL); // should always be non null
+    struct continuously_thread_args *args = gargs;
+    printf("[LOG] starting get_fishes_continuously thread for fd %d\n",
+           args->fd);
 
     char send_buffer[1024] = {0};
-    while (write(fd, "", 0) != -1) {
-        get_fishes(NULL, 0, send_buffer, 1024);
+    while (write(args->fd, "", 0) != -1) {
+        get_fishes(args->viewer_config, send_buffer, 1024);
         size_t send_length = strnlen(send_buffer, 1024);
         if (send_length > 0) {
-            int n = write(fd, send_buffer, send_length);
+            int n = write(args->fd, send_buffer, send_length);
             if (n < 0)
                 fprintf(stderr, "[ERR] ERROR writing to socket");
             send_buffer[send_length] = '\0';
@@ -107,28 +124,32 @@ void *get_fishes_continuously_start(void *args) {
         }
         sleep(3);
     }
+
+    free(gargs); // ugly but since the thread is detached, It's necessary
     return 0;
 }
 
-int get_fishes_continuously(int fd, char *args, size_t args_len,
+int get_fishes_continuously(int fd, struct viewer_config_t *viewer_config,
                             char *send_buffer, size_t send_buffer_capacity) {
+
     pthread_t thread_get_fishes_continuously;
+    struct continuously_thread_args *th_args =
+        malloc(sizeof(struct continuously_thread_args));
+    assert(th_args != NULL); // OOM
+    th_args->fd = fd;
+    th_args->viewer_config = viewer_config;
     pthread_create(&thread_get_fishes_continuously, NULL,
-                   get_fishes_continuously_start, (void *)(long)fd);
+                   get_fishes_continuously_start, th_args);
     pthread_detach(thread_get_fishes_continuously);
 
-    return get_fishes(args, args_len, send_buffer, send_buffer_capacity);
+    return 0;
 }
 
-// void listls(char *args, size_t args_len, char *send_buffer,size_t
-// send_buffer_capacity) {
-//     strcpy(server_response, "not yet listls");
-// }
-
-// void bye(char *args, size_t args_len, char *send_buffer,size_t
-// send_buffer_capacity) {
-//     strcpy(server_response, "not yet bye");
-// }
+int bye(int fd, char *send_buffer, size_t send_buffer_capacity) {
+    // should stop the thread and while loop in connexion
+    snprintf(send_buffer, send_buffer_capacity, "bye\n");
+    return 1;
+}
 
 /**
  * write the response to given ping command in send_buffer
@@ -152,67 +173,135 @@ int pong(char *args, size_t args_len, char *send_buffer,
     return 0;
 }
 
-// void responseToAdd(char *args, size_t args_len, char *send_buffer,size_t
-// send_buffer_capacity) {
-//     strcpy(server_response, "not yet responseToAdd");
-// }
-// void responseToDel(char *args, size_t args_len, char *send_buffer,size_t
-// send_buffer_capacity) {
-//     strcpy(server_response, "not yet responseToDel");
-// }
-// void responseToStrat(char *args, size_t args_len, char *send_buffer,size_t
-// send_buffer_capacity) {
-//     strcpy(server_response, "not yet responseToStart");
-// }
+/**
+ * add the fish by calling add_fish
+ */
+int responseToAdd(char *args, size_t args_len, char *send_buffer,
+                  size_t send_buffer_capacity) {
+    if (args_len <= 0) {
+        snprintf(send_buffer, send_buffer_capacity,
+                 "error no fish details described\n");
+        return -1;
+    }
+    struct fish_t newFish;
+    if (sscanf(args, "%s at %fx%f,%fx%f,RandomWayPoint", newFish.name,
+               &newFish.current_x, &newFish.current_y, &newFish.width,
+               &newFish.height) < 5) {
+        printf("command unrecognized\n");
+        return -1;
+    }
+
+    newFish.target_x = newFish.current_x;
+    newFish.target_y = newFish.current_y;
+    newFish.time_left = 0;
+
+    struct fish_t *existedFish = next_fish(NULL);
+    while (existedFish != NULL) {
+        if (strcmp(existedFish->name, newFish.name) == 0) {
+            snprintf(send_buffer, send_buffer_capacity, "NOK\n");
+            return -1;
+        }
+        existedFish = next_fish(existedFish);
+    }
+
+    add_fish(newFish);
+    snprintf(send_buffer, send_buffer_capacity, "OK\n");
+    return 0;
+}
+
+/**
+ * delet the fish by calling remove_fish
+ */
+int responseToDel(char *args, size_t args_len, char *send_buffer,
+                  size_t send_buffer_capacity) {
+    if (args_len <= 0) {
+        snprintf(send_buffer, send_buffer_capacity,
+                 "error no fish name gave\n");
+        return -1;
+    }
+    char name[FISH_NAME_MAX_LENGTH];
+    if (sscanf(args, "%s", name) < 1) {
+        printf("command unrecognized\n");
+        return -1;
+    }
+
+    struct fish_t *existedFish = next_fish(NULL);
+    while (existedFish != NULL) {
+        if (strcmp(existedFish->name, name) == 0) {
+            remove_fish(existedFish);
+            snprintf(send_buffer, send_buffer_capacity, "OK\n");
+            return 0;
+        }
+        existedFish = next_fish(existedFish);
+    }
+    snprintf(send_buffer, send_buffer_capacity, "NOK\n");
+    return 0;
+}
+
+/**
+ * start the fish by given an target and a time left
+ */
+int responseToStrat(char *args, size_t args_len, char *send_buffer,
+                    size_t send_buffer_capacity) {
+    if (args_len <= 0) {
+        snprintf(send_buffer, send_buffer_capacity,
+                 "error no fish name gave\n");
+        return -1;
+    }
+    char name[FISH_NAME_MAX_LENGTH];
+    if (sscanf(args, "%s", name) < 1) {
+        printf("command unrecognized\n");
+        return -1;
+    }
+
+    struct fish_t *existedFish = next_fish(NULL);
+    while (existedFish != NULL) {
+        if (strcmp(existedFish->name, name) == 0) {
+            existedFish->target_x = rand() % viewers_config.width;
+            existedFish->target_y = rand() % viewers_config.height;
+            existedFish->time_left = rand() % 10;
+            snprintf(send_buffer, send_buffer_capacity, "OK\n");
+            return 0;
+        }
+        existedFish = next_fish(existedFish);
+    }
+    snprintf(send_buffer, send_buffer_capacity, "NOK\n");
+    return 0;
+}
 
 int handle_client_request(int fd, struct viewer_config_t **viewer_config,
                           char *receive_buffer, size_t receive_buffer_len,
                           char *send_buffer, size_t send_buffer_capacity) {
-    // printf("%s\n", receive_buffer);
-
-    /* if (strncmp(receive_buffer, "help", 4) == 0) { */
-    /*   return help(parsed, server_response); */
-    /* } */
     if (strncmp(receive_buffer, "hello", 5) == 0) {
         return greeting(viewer_config, receive_buffer + 6, receive_buffer_len,
                         send_buffer, send_buffer_capacity);
     }
     if (strncmp(receive_buffer, "getFishes\n", 10) == 0) {
-        return get_fishes(receive_buffer + 11, receive_buffer_len, send_buffer,
-                          send_buffer_capacity);
+        return get_fishes(*viewer_config, send_buffer, send_buffer_capacity);
     }
-    if (strncmp(receive_buffer, "getFishesContinuously", 21) == 0) {
-        return get_fishes_continuously(fd, receive_buffer + 22,
-                                       receive_buffer_len, send_buffer,
+    if (strncmp(receive_buffer, "getFishesContinuously\n", 22) == 0) {
+        return get_fishes_continuously(fd, *viewer_config, send_buffer,
                                        send_buffer_capacity);
     }
-    /* if (strncmp(receive_buffer, "ls", 2) == 0) { */
-    /*   return listls(receive_buffer + 3, receive_buffer_len, send_buffer, */
-    /* 		send_buffer_capacity); */
-    /* } */
-    /* if (strncmp(receive_buffer, "log", 3) == 0) { */
-    /*   return bye(receive_buffer + 4, receive_buffer_len, send_buffer, */
-    /* 		send_buffer_capacity); */
-    /* } */
+    if (strncmp(receive_buffer, "log out\n", 8) == 0) {
+        return bye(fd, send_buffer, send_buffer_capacity);
+    }
     if (strncmp(receive_buffer, "ping", 4) == 0) {
         return pong(receive_buffer + 5, receive_buffer_len, send_buffer,
                     send_buffer_capacity);
     }
-    /* if (strncmp(receive_buffer, "addFish", 7) == 0) { */
-    /*   return responseToAdd(receive_buffer + 8, receive_buffer_len,
-     * send_buffer, */
-    /* 		send_buffer_capacity); */
-    /* } */
-    /* if (strncmp(receive_buffer, "delFish", 7) == 0) { */
-    /*   return responseToDel(receive_buffer + 8, receive_buffer_len,
-     * send_buffer, */
-    /* 		send_buffer_capacity); */
-    /* } */
-    /* if (strncmp(receive_buffer, "startFish", 9) == 0) { */
-    /*   return responseToStrat(receive_buffer + 10, receive_buffer_len,
-     * send_buffer, */
-    /* 		send_buffer_capacity); */
-    /* } */
+    if (strncmp(receive_buffer, "addFish", 7) == 0) {
+        return responseToAdd(receive_buffer + 8, receive_buffer_len,
+                             send_buffer, send_buffer_capacity);
+    }
+    if (strncmp(receive_buffer, "delFish", 7) == 0) {
+        return responseToDel(receive_buffer + 8, receive_buffer_len,
+                             send_buffer, send_buffer_capacity);
+    }
+    if (strncmp(receive_buffer, "startFish", 9) == 0) {
+        return responseToStrat(receive_buffer + 10, receive_buffer_len,
+                               send_buffer, send_buffer_capacity);
+    }
 
     fprintf(stderr, "[ERR] unknown protocol command\n");
     return -1;

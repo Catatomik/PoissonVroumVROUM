@@ -6,6 +6,8 @@
 #include "parse_cfg.h"
 #include "parse_viewers_config.h"
 #include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -16,6 +18,14 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+int is_fd_closed(int fd) {
+    int flags = fcntl(fd, F_GETFD);
+    if (flags == -1 && errno == EBADF) {
+        return 1; // FD is closed
+    }
+    return 0; // FD is open
+}
 
 pthread_mutex_t mutex;
 
@@ -72,7 +82,7 @@ void *thread_function_client(void *args) {
     char receive_buffer[RECEIVE_BUFFER_CAPACITY] = {0};
     char send_buffer[SEND_BUFFER_CAPACITY] = {0};
 
-    while (write(client_sockfd, "", 0) != -1) {
+    while (!is_fd_closed(client_sockfd)) {
         int n = read(client_sockfd, receive_buffer + receive_buffer_len,
                      RECEIVE_BUFFER_CAPACITY - receive_buffer_len - 1);
         if (n < 0) {
@@ -88,27 +98,28 @@ void *thread_function_client(void *args) {
             printf("The message from client %d: %s\n", thread_id,
                    receive_buffer);
             memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
-            if (handle_client_request(client_sockfd, &viewer_config,
-                                      receive_buffer, receive_buffer_len,
-                                      send_buffer, SEND_BUFFER_CAPACITY)) {
+
+            int res = handle_client_request(client_sockfd, &viewer_config,
+                                            receive_buffer, receive_buffer_len,
+                                            send_buffer, SEND_BUFFER_CAPACITY);
+            if (res != 1 && res != 0) {
                 fprintf(stderr, "Error handling client request\n");
                 // TODO: handle it ?
-            } else {
-                receive_buffer_len = 0;
             }
             size_t send_length = strnlen(send_buffer, SEND_BUFFER_CAPACITY);
             if (send_length > 0) {
                 n = write(client_sockfd, send_buffer, send_length);
                 if (n < 0)
                     error("ERROR writing to socket");
-                send_buffer[send_length] = '\0';
-                printf("[DEBUG] sending '%s'\n", send_buffer);
             }
+            if (res == 1) { // after the last send we can close the conn
+                close(client_sockfd);
+            }
+
+            receive_buffer_len = 0; // done processing this cmd
         }
     }
 
-    // close client
-    close(client_sockfd);
     if (viewer_config) {
         viewer_config->is_in_use = false;
     }
@@ -117,7 +128,7 @@ void *thread_function_client(void *args) {
     pthread_mutex_lock(&mutex);
     *nb_thread_used -= 1;
     pthread_mutex_unlock(&mutex);
-    printf("[INFO] client %d disconnected", thread_id);
+    printf("[INFO] client %d disconnected\n", thread_id);
     return NULL;
 }
 
@@ -137,7 +148,7 @@ void *start(void *_) {
            config.controller_port);
 
     // Add infinite loop to keep server running and accept new connections
-    while (1) {
+    while (true) {
         listen(sockfd, 5);
         newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr,
                            (unsigned int *)&cli_addr_len);

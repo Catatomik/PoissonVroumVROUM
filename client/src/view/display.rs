@@ -127,20 +127,14 @@ fn find_next_current_positions(
             find_right_position(current_fish, new_fish, dt, viewer_config);
         }
     }
-    // on checke les fish qui ne sont plus envoyés par le serveur ie ont été supprimés
-    let keys_to_remove: Vec<String> = current_fish_list
-        .iter()
-        .filter(|(_, fish)| {
-            !new_fish_list_guard
-                .iter()
-                .any(|new_fish| new_fish.name == fish.name)
-        })
-        .map(|(name, _)| name.clone())
-        .collect();
 
-    for key in keys_to_remove {
-        current_fish_list.remove(&key);
-    }
+    // on checke les fish qui ne sont plus envoyés par le serveur ie ont été supprimés
+    current_fish_list.retain(|_, fish| {
+        // Keep it if it's found in the new list
+        new_fish_list_guard
+            .iter()
+            .any(|new_fish| new_fish.name == fish.name)
+    });
 }
 
 //display a fish with a texture, a fish and the rotation

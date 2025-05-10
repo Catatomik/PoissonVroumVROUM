@@ -35,8 +35,9 @@ pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: Serve
         }
         ServerPacket::FishesList(list) => {
             let mut fishes_lock = fishes.lock().unwrap();
+            let old_length = fishes_lock.len();
             let new_length = list.len();
-            fishes_lock.splice(0..new_length - 1, list);
+            fishes_lock.splice(0..(new_length - 1).min(old_length - 1).min(0), list);
             fishes_lock.truncate(new_length);
         }
         _ => unimplemented!(),

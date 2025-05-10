@@ -1,6 +1,7 @@
 #include "fishes.h"
 #include "config.h"
 #include <assert.h>
+#include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -86,12 +87,43 @@ void run_sea() {
         struct fish_t *f;
         TAILQ_FOREACH(f, &fishes, _next) {
             // printf("fish %s | time left: %f\n", f->name, f->time_left);
+
+            if (f->time_left > 0) {
+                float dx = f->target_x - f->current_x;
+                float dy = f->target_y - f->current_y;
+                float distance = sqrt(dx * dx + dy * dy);
+
+                float total_time = f->time_left + 1.0;
+                float speed_factor = 1.0 / total_time;
+
+                float step_size = distance * speed_factor;
+                if (distance > 0.1) {
+                    float dir_x = dx / distance;
+                    float dir_y = dy / distance;
+
+                    f->current_x += dir_x * step_size;
+                    f->current_y += dir_y * step_size;
+
+                    if (f->current_x < 0)
+                        f->current_x = 0;
+                    if (f->current_y < 0)
+                        f->current_y = 0;
+                    if (f->current_x > viewers_config.width - f->width)
+                        f->current_x = viewers_config.width - f->width;
+                    if (f->current_y > viewers_config.height - f->height)
+                        f->current_y = viewers_config.height - f->height;
+                }
+            }
+
             if (f->time_left - 1. <= 0.) {
                 // printf("[LOG] timer hit 0, getting a new target\n");
                 f->time_left = rand() % MAX_FISH_TARGET_TIME + 1;
-                f->target_x = ((float)rand() / RAND_MAX) * viewers_config.width;
-                f->target_y =
-                    ((float)rand() / RAND_MAX) * viewers_config.height;
+
+                // - fish size to not go out of the aquarium
+                f->target_x = ((float)rand() / RAND_MAX) *
+                              (viewers_config.width - f->width);
+                f->target_y = ((float)rand() / RAND_MAX) *
+                              (viewers_config.height - f->height);
                 // printf("[LOG] new target (%f, %f) in %f\n", f->target_x,
                 //        f->target_y, f->time_left);
             }

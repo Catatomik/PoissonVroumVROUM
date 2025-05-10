@@ -196,20 +196,20 @@ int main(int argc, char **argv) {
     struct fish_t f1 = {.name = "blublu",
                         .current_x = 5,
                         .current_y = 3,
-                        .width = 4,
-                        .height = 4,
-                        .target_x = 8,
-                        .target_y = 9,
+                        .width = 16,
+                        .height = 20,
+                        .target_x = 52,
+                        .target_y = 12,
                         .time_left = 3};
     add_fish(f1);
 
     struct fish_t f2 = {.name = "bloblo",
                         .current_x = 5,
                         .current_y = 3,
-                        .width = 4,
-                        .height = 4,
-                        .target_x = 8,
-                        .target_y = 9,
+                        .width = 12,
+                        .height = 12,
+                        .target_x = 208,
+                        .target_y = 407,
                         .time_left = 3};
     add_fish(f2);
 

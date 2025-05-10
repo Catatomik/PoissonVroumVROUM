@@ -86,9 +86,9 @@ void *thread_function_client(void *args) {
         int n = read(client_sockfd, receive_buffer + receive_buffer_len,
                      RECEIVE_BUFFER_CAPACITY - receive_buffer_len - 1);
         if (n < 0) {
-            error("ERROR reading from socket");
+            perror("ERROR reading from socket");
             close(client_sockfd);
-            return NULL;
+            break;
         }
         receive_buffer_len += n;
         receive_buffer[receive_buffer_len] = '\0';
@@ -109,8 +109,10 @@ void *thread_function_client(void *args) {
             size_t send_length = strnlen(send_buffer, SEND_BUFFER_CAPACITY);
             if (send_length > 0) {
                 n = write(client_sockfd, send_buffer, send_length);
-                if (n < 0)
-                    error("ERROR writing to socket");
+                if (n < 0) {
+                    perror("ERROR writing to socket");
+                    break;
+                }
             }
             if (res == 1) { // after the last send we can close the conn
                 close(client_sockfd);

@@ -221,9 +221,7 @@ int main(int argc, char **argv) {
     pthread_create(&thread_sea, NULL, (void *(*)(void *))run_sea, NULL);
     pthread_detach(thread_sea);
 
-    // pthread_create(&thread_connexion, NULL, start, (void *)config);
-
-    // init config structur of controller configuration file
+    // init config struct of controller configuration file
     char input[MAX_INPUT];
     while (1) {
         printf("> ");

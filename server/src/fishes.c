@@ -84,13 +84,13 @@ void run_sea() {
         pthread_mutex_lock(&fishes_list_lock);
         struct fish_t *f;
         TAILQ_FOREACH(f, &fishes, _next) {
-            // printf("fish %s | time left: %f\n", f->name, f->time_left);
+            // printf("fish %s | time left: %d\n", f->name, f->time_left);
             if (f->time_left - 1. <= 0.) {
                 // printf("[LOG] timer hit 0, getting a new target\n");
                 f->time_left = rand() % MAX_FISH_TARGET_TIME + 1;
                 f->target_x = (float)rand() / RAND_MAX;
                 f->target_y = (float)rand() / RAND_MAX;
-                // printf("[LOG] new target (%f, %f) in %f\n", f->target_x,
+                // printf("[LOG] new target (%f, %f) in %d\n", f->target_x,
                 //        f->target_y, f->time_left);
             }
             f->time_left -= 1.0;

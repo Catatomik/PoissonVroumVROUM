@@ -76,15 +76,14 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
     assert(viewer_config !=
            NULL); // cannot send to a viewer which doesn't exist
 
-    int printed_count = snprintf(send_buffer, send_buffer_capacity, "list");
-    if (printed_count > send_buffer_capacity)
-        goto err;
-
-    // client's view info
     int view_x = viewer_config->x;
     int view_y = viewer_config->y;
     int view_width = viewer_config->width;
     int view_height = viewer_config->height;
+
+    int printed_count = snprintf(send_buffer, send_buffer_capacity, "list");
+    if (printed_count > send_buffer_capacity)
+        goto err;
 
     struct fish_t *f = next_fish(NULL);
     while (f != NULL) {
@@ -94,11 +93,18 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
             (f->current_y < view_y + view_height) &&
             (f->current_y + f->height > view_y)) {
 
+            // convert fish coordinates to percentage of view window & clamp to
+            // percentages
+            float rel_x = ((f->current_x - view_x) * 100.0) / view_width;
+            float rel_y = ((f->current_y - view_y) * 100.0) / view_height;
+            rel_x = rel_x < 0 ? 0 : (rel_x > 100 ? 100 : rel_x);
+            rel_y = rel_y < 0 ? 0 : (rel_y > 100 ? 100 : rel_y);
+
             printed_count +=
                 snprintf(send_buffer + printed_count,
                          send_buffer_capacity - printed_count,
-                         " [%s at %fx%f,%fx%f,%f]", f->name, f->target_x,
-                         f->target_y, f->width, f->height, f->time_left);
+                         " [%s at %.0fx%.0f,%fx%f,%d]", f->name, rel_x, rel_y,
+                         f->width, f->height, f->time_left);
             if (printed_count > send_buffer_capacity)
                 goto err;
         }

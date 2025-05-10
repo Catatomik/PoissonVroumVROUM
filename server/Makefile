@@ -9,7 +9,7 @@ TESTBUILDDIR = $(BUILDDIR)/tests
 
 CFLAGS = -Wall -Werror -I$(SRCDIR)
 CFMTFLAGS ?= -style='file:.clang-format'
-VFLAGS ?= --leak-check=full
+VFLAGS ?= --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 SRC_OBJ = $(patsubst $(SRCDIR)/%.c, $(SRCBUILDDIR)/%.o, $(SRC))
@@ -59,7 +59,7 @@ ci-test:
 # Run a single test with valgrind
 $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 	printf '\t- %s: ' $@
-	timeout 5 valgrind $(VFLAGS) ./$< >/dev/null 2>&1 && echo 'succès' || echo 'échec'
+	timeout 5 valgrind $(VFLAGS) ./$< >/dev/null && echo 'succès' || echo 'échec'
 
 valgrind: $(TEST_BINS_EXEC_VG)
 
@@ -80,4 +80,4 @@ clean:
 # Rules that don't produce files
 .PHONY: all $(TEST_BINS_EXEC) test ci-test $(TEST_BINS_EXEC_VG) valgrind ci-valgrind format check-format clean
 # Do not print executed commands while running tests, for cleaner output
-.SILENT: $(TEST_BINS_EXEC) $(TEST_BINS_EXEC_VG)
+.SILENT: $(TEST_BINS_EXEC)

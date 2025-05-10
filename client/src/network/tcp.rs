@@ -76,7 +76,7 @@ where
 
         self.buf.extend_from_slice(&buf[..read_cnt]);
 
-        let newline_idx = match buf.iter().position(|c| *c == b'\n') {
+        let newline_idx = match self.buf.iter().position(|c| *c == b'\n') {
             Some(idx) => idx,
             None => return Ok(None),
         };

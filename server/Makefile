@@ -64,7 +64,7 @@ $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 valgrind: $(TEST_BINS_EXEC_VG)
 
 ci-valgrind:
-	@make valgrind | grep -vzq 'échec'
+	make valgrind | grep -vzq 'échec'
 
 # Formats all files in source dirs (src, test)
 format:

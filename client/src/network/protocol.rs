@@ -176,7 +176,9 @@ impl FromStr for ServerPacket {
 
                                 // Parse time
                                 let timestamp = Instant::now()
-                                    + Duration::from_secs(time.parse().map_err(|_| InvalidFormat)?);
+                                    + Duration::from_secs_f32(
+                                        time.parse().map_err(|_| InvalidFormat)?,
+                                    );
 
                                 Ok(ViewFish::new(
                                     fish_name, target_x, target_y, size_w, size_h, timestamp, false,

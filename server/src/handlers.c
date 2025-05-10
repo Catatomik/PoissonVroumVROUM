@@ -103,7 +103,7 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
             printed_count +=
                 snprintf(send_buffer + printed_count,
                          send_buffer_capacity - printed_count,
-                         " [%s at %.0fx%.0f,%fx%f,%d]", f->name, rel_x, rel_y,
+                         " [%s at %.0fx%.0f,%fx%f,%f]", f->name, rel_x, rel_y,
                          f->width, f->height, f->time_left);
             if (printed_count > send_buffer_capacity)
                 goto err;

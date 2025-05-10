@@ -9,7 +9,7 @@ struct fish_t {
     float current_x, current_y;
     float width, height;
     float target_x, target_y;
-    int time_left;
+    float time_left;
     TAILQ_ENTRY(fish_t) _next;
 };
 

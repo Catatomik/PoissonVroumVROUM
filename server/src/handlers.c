@@ -80,14 +80,28 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
     if (printed_count > send_buffer_capacity)
         goto err;
 
+    // client's view info
+    int view_x = viewer_config->x;
+    int view_y = viewer_config->y;
+    int view_width = viewer_config->width;
+    int view_height = viewer_config->height;
+
     struct fish_t *f = next_fish(NULL);
     while (f != NULL) {
-        printed_count += snprintf(
-            send_buffer + printed_count, send_buffer_capacity - printed_count,
-            " [%s at %fx%f,%fx%f,%f]", f->name, f->target_x, f->target_y,
-            f->width, f->height, f->time_left);
-        if (printed_count > send_buffer_capacity)
-            goto err;
+        // if any part of the fish is visible in the view window, send it
+        if ((f->current_x < view_x + view_width) &&
+            (f->current_x + f->width > view_x) &&
+            (f->current_y < view_y + view_height) &&
+            (f->current_y + f->height > view_y)) {
+
+            printed_count +=
+                snprintf(send_buffer + printed_count,
+                         send_buffer_capacity - printed_count,
+                         " [%s at %fx%f,%fx%f,%f]", f->name, f->target_x,
+                         f->target_y, f->width, f->height, f->time_left);
+            if (printed_count > send_buffer_capacity)
+                goto err;
+        }
         f = next_fish(f);
     }
     send_buffer[printed_count] = '\n';

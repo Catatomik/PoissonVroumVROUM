@@ -8,6 +8,7 @@ SRCBUILDDIR = $(BUILDDIR)/src
 TESTBUILDDIR = $(BUILDDIR)/tests
 
 CFLAGS = -Wall -Werror -I$(SRCDIR) -pthread
+LDFLAGS = -lm
 CFMTFLAGS ?= -style='file:.clang-format'
 VFLAGS ?= --leak-check=full
 
@@ -31,7 +32,7 @@ $(SRCBUILDDIR)/%.o: $(SRCDIR)/%.c | $(SRCBUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 main: $(SRC_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(SRC_OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SRC_OBJ)
 
 $(TESTBUILDDIR)/%.o: $(TESTDIR)/%.c | $(TESTBUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -40,7 +41,7 @@ $(TESTBUILDDIR)/%.o: $(TESTDIR)/%.c | $(TESTBUILDDIR)
 .PRECIOUS: $(TESTBUILDDIR)/%.o
 
 $(TESTBUILDDIR)/%: $(TESTBUILDDIR)/%.o $(SRC_NO_MAIN_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 # Run a single test
 # Uses static pattern (https://www.gnu.org/software/make/manual/html_node/Static-Pattern.html)

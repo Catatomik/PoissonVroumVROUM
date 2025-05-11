@@ -55,7 +55,7 @@ test: $(TEST_BINS_EXEC)
 
 ci-test:
 # Revert matching, from https://stackoverflow.com/a/75086890
-	@make test | grep -vzq 'échec'
+	@exit $$(make -s test | sed -e '/succès$$/d' | tee /dev/stderr |  wc -l)
 
 # Run a single test with valgrind
 $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
@@ -65,7 +65,7 @@ $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 valgrind: $(TEST_BINS_EXEC_VG)
 
 ci-valgrind:
-	@make valgrind | grep -vzq 'échec'
+	@exit $$(make -s valgrind | sed -e '/succès$$/d' | tee /dev/stderr |  wc -l)
 
 # Formats all files in source dirs (src, test)
 format:

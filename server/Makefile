@@ -54,7 +54,6 @@ $(TEST_BINS_EXEC): %.test: $(TESTBUILDDIR)/%
 test: $(TEST_BINS_EXEC)
 
 ci-test:
-# Revert matching, from https://stackoverflow.com/a/75086890
 	@exit $$(make -s test | sed -e '/succès$$/d' | tee /dev/stderr |  wc -l)
 
 # Run a single test with valgrind

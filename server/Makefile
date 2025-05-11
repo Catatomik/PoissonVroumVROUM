@@ -7,7 +7,8 @@ BUILDDIR = build
 SRCBUILDDIR = $(BUILDDIR)/src
 TESTBUILDDIR = $(BUILDDIR)/tests
 
-CFLAGS = -Wall -Werror -I$(SRCDIR)
+CFLAGS = -Wall -Werror -I$(SRCDIR) -pthread
+LDFLAGS = -lm
 CFMTFLAGS ?= -style='file:.clang-format'
 VFLAGS ?= --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1
 
@@ -31,7 +32,7 @@ $(SRCBUILDDIR)/%.o: $(SRCDIR)/%.c | $(SRCBUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 main: $(SRC_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(SRC_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(SRC_OBJ) $(LDFLAGS)
 
 $(TESTBUILDDIR)/%.o: $(TESTDIR)/%.c | $(TESTBUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -40,7 +41,7 @@ $(TESTBUILDDIR)/%.o: $(TESTDIR)/%.c | $(TESTBUILDDIR)
 .PRECIOUS: $(TESTBUILDDIR)/%.o
 
 $(TESTBUILDDIR)/%: $(TESTBUILDDIR)/%.o $(SRC_NO_MAIN_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Run a single test
 # Uses static pattern (https://www.gnu.org/software/make/manual/html_node/Static-Pattern.html)
@@ -53,8 +54,7 @@ $(TEST_BINS_EXEC): %.test: $(TESTBUILDDIR)/%
 test: $(TEST_BINS_EXEC)
 
 ci-test:
-# Revert matching, from https://stackoverflow.com/a/75086890
-	@make test | grep -vzq 'échec'
+	@exit $$(make -s test | sed -e '/succès$$/d' | tee /dev/stderr |  wc -l)
 
 # Run a single test with valgrind
 $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
@@ -64,7 +64,7 @@ $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 valgrind: $(TEST_BINS_EXEC_VG)
 
 ci-valgrind:
-	@make valgrind | grep -vzq 'échec'
+	@exit $$(make -s valgrind | sed -e '/succès$$/d' | tee /dev/stderr |  wc -l)
 
 # Formats all files in source dirs (src, test)
 format:

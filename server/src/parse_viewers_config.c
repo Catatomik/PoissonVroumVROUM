@@ -49,12 +49,18 @@ int viewers_config_from_file(struct viewers_config_t *config,
             // header is "{aquarium_width} x {aquarium_height}"
             int ret =
                 sscanf(buffer, "%d x %d", &config->width, &config->height);
-            if (ret < 2) // less than two elements matched
+            if (ret < 2) {
+                // less than two elements matched
+                fclose(fp);
                 return -2;
-            if (ret == EOF)
+            }
+            if (ret == EOF) {
+                fclose(fp);
                 return EOF;
+            }
         } else {
             if (buffer[0] != 'N') {
+                fclose(fp);
                 return 1; // Invalid format, viewers should be in the format
                           // "N{viewer_id} {width}x{height}+{x}+{y}"
             }
@@ -63,10 +69,14 @@ int viewers_config_from_file(struct viewers_config_t *config,
             int width, height;
             int ret = sscanf(buffer, "N%d %dx%d+%d+%d", &viewer_id, &x, &y,
                              &width, &height);
-            if (ret < 5) // less than 5 elements matched
+            if (ret < 5) { // less than 5 elements matched
+                fclose(fp);
                 return i;
-            if (ret == EOF)
+            }
+            if (ret == EOF) {
+                fclose(fp);
                 return EOF;
+            }
             add_viewer_config(config, viewer_id, x, y, width, height);
         }
         i++;

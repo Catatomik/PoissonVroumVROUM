@@ -35,8 +35,9 @@ pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: Serve
         }
         ServerPacket::FishesList(list) => {
             let mut fishes_lock = fishes.lock().unwrap();
+            let old_length = fishes_lock.len();
             let new_length = list.len();
-            fishes_lock.splice(0..new_length - 1, list);
+            fishes_lock.splice(0..(1.max(new_length) - 1).min(1.max(old_length) - 1), list);
             fishes_lock.truncate(new_length);
         }
         _ => unimplemented!(),
@@ -61,7 +62,7 @@ fn main() {
         },
     );
     // Temp ping to check API connection
-    fish_api.ping().unwrap();
+    fish_api.start().unwrap();
 
     // Start loop of the app
     thread::spawn(move || command_loop(fish_api));

@@ -10,7 +10,7 @@ TESTBUILDDIR = $(BUILDDIR)/tests
 CFLAGS = -Wall -Werror -I$(SRCDIR) -pthread
 LDFLAGS = -lm
 CFMTFLAGS ?= -style='file:.clang-format'
-VFLAGS ?= --leak-check=full
+VFLAGS ?= --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 SRC_OBJ = $(patsubst $(SRCDIR)/%.c, $(SRCBUILDDIR)/%.o, $(SRC))
@@ -53,12 +53,19 @@ $(TEST_BINS_EXEC): %.test: $(TESTBUILDDIR)/%
 # Run all tests
 test: $(TEST_BINS_EXEC)
 
+ci-test:
+# Revert matching, from https://stackoverflow.com/a/75086890
+	@make test | grep -vzq 'échec'
+
 # Run a single test with valgrind
 $(TEST_BINS_EXEC_VG): %.vg: $(TESTBUILDDIR)/%
 	printf '\t- %s: ' $@
 	timeout 5 valgrind $(VFLAGS) ./$< >/dev/null 2>&1 && echo 'succès' || echo 'échec'
 
 valgrind: $(TEST_BINS_EXEC_VG)
+
+ci-valgrind:
+	@make valgrind | grep -vzq 'échec'
 
 # Formats all files in source dirs (src, test)
 format:
@@ -72,6 +79,6 @@ clean:
 	rm -rf $(BUILDDIR) main
 
 # Rules that don't produce files
-.PHONY: all $(TEST_BINS_EXEC) test $(TEST_BINS_EXEC_VG) valgrind format check-format clean
+.PHONY: all $(TEST_BINS_EXEC) test ci-test $(TEST_BINS_EXEC_VG) valgrind ci-valgrind format check-format clean
 # Do not print executed commands while running tests, for cleaner output
 .SILENT: $(TEST_BINS_EXEC) $(TEST_BINS_EXEC_VG)

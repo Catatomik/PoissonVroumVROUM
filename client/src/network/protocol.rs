@@ -113,74 +113,83 @@ impl FromStr for ServerPacket {
                     Err(InvalidFormat)
                 }
             }
-            "list" => Ok(ServerPacket::FishesList(
-                raw_packet
-                    .strip_prefix("list ")
-                    .expect("Command was `list`")
-                    .strip_prefix('[')
-                    .ok_or(InvalidFormat)?
-                    .strip_suffix(']')
-                    .ok_or(InvalidFormat)?
-                    .split("] [")
-                    // all ] or [ are removed
-                    .map(|fish_slice| {
-                        // At this point, fish_slice is like "fish_name at XxY,WxH,delay"
-                        let mut splitted = fish_slice.split(" at ");
-                        // Separate fish name from props
-                        let (fish_name, mut props) = if let (Some(fish_name), Some(props), None) =
-                            (splitted.next(), splitted.next(), splitted.next())
-                        {
-                            Ok((fish_name, props.split(',')))
-                        } else {
-                            Err(InvalidFormat)
-                        }?;
+            "list" => {
+                let packet_data = raw_packet.strip_prefix("list").expect("Command was `list`");
+                if packet_data.is_empty() {
+                    Ok(ServerPacket::FishesList(vec![]))
+                } else {
+                    Ok(ServerPacket::FishesList(
+                        packet_data
+                            .strip_prefix(" [")
+                            .ok_or(InvalidFormat)?
+                            .strip_suffix(']')
+                            .ok_or(InvalidFormat)?
+                            .split("] [")
+                            // all ] or [ are removed
+                            .map(|fish_slice| {
+                                // At this point, fish_slice is like "fish_name at XxY,WxH,delay"
+                                let mut splitted = fish_slice.split(" at ");
+                                // Separate fish name from props
+                                let (fish_name, mut props) =
+                                    if let (Some(fish_name), Some(props), None) =
+                                        (splitted.next(), splitted.next(), splitted.next())
+                                    {
+                                        Ok((fish_name, props.split(',')))
+                                    } else {
+                                        Err(InvalidFormat)
+                                    }?;
 
-                        // Parse props parts
-                        let (mut coords, mut size, time) =
-                            if let (Some(coords), Some(size), Some(time), None) =
-                                (props.next(), props.next(), props.next(), props.next())
-                            {
-                                Ok((coords.split('x'), size.split('x'), time))
-                            } else {
-                                Err(InvalidFormat)
-                            }?;
+                                // Parse props parts
+                                let (mut coords, mut size, time) =
+                                    if let (Some(coords), Some(size), Some(time), None) =
+                                        (props.next(), props.next(), props.next(), props.next())
+                                    {
+                                        Ok((coords.split('x'), size.split('x'), time))
+                                    } else {
+                                        Err(InvalidFormat)
+                                    }?;
 
-                        // Parse position parts
-                        let (target_x, target_y) = if let (Some(target_x), Some(target_y), None) =
-                            (coords.next(), coords.next(), coords.next())
-                        {
-                            Ok((
-                                target_x.parse::<f32>().map_err(|_| InvalidFormat)?,
-                                target_y.parse::<f32>().map_err(|_| InvalidFormat)?,
-                            ))
-                        } else {
-                            Err(InvalidFormat)
-                        }?;
+                                // Parse position parts
+                                let (target_x, target_y) =
+                                    if let (Some(target_x), Some(target_y), None) =
+                                        (coords.next(), coords.next(), coords.next())
+                                    {
+                                        Ok((
+                                            target_x.parse::<f32>().map_err(|_| InvalidFormat)?,
+                                            target_y.parse::<f32>().map_err(|_| InvalidFormat)?,
+                                        ))
+                                    } else {
+                                        Err(InvalidFormat)
+                                    }?;
 
-                        // Parse size parts
-                        let (size_w, size_h) = if let (Some(size_w), Some(size_h), None) =
-                            (size.next(), size.next(), size.next())
-                        {
-                            Ok((
-                                size_w.parse::<f32>().map_err(|_| InvalidFormat)?,
-                                size_h.parse::<f32>().map_err(|_| InvalidFormat)?,
-                            ))
-                        } else {
-                            Err(InvalidFormat)
-                        }?;
+                                // Parse size parts
+                                let (size_w, size_h) = if let (Some(size_w), Some(size_h), None) =
+                                    (size.next(), size.next(), size.next())
+                                {
+                                    Ok((
+                                        size_w.parse::<f32>().map_err(|_| InvalidFormat)?,
+                                        size_h.parse::<f32>().map_err(|_| InvalidFormat)?,
+                                    ))
+                                } else {
+                                    Err(InvalidFormat)
+                                }?;
 
-                        // Parse time
-                        let timestamp = Instant::now()
-                            + Duration::from_secs(time.parse().map_err(|_| InvalidFormat)?);
+                                // Parse time
+                                let timestamp = Instant::now()
+                                    + Duration::from_secs_f32(
+                                        time.parse().map_err(|_| InvalidFormat)?,
+                                    );
 
-                        Ok(ViewFish::new(
-                            fish_name, target_x, target_y, size_w, size_h, timestamp, false,
-                        ))
-                    })
-                    // Collect into a Result because it implements FromIterator
-                    // See https://doc.rust-lang.org/std/result/index.html#collecting-into-result
-                    .collect::<Result<Vec<ViewFish>, ServerPacketParsingError>>()?,
-            )),
+                                Ok(ViewFish::new(
+                                    fish_name, target_x, target_y, size_w, size_h, timestamp, false,
+                                ))
+                            })
+                            // Collect into a Result because it implements FromIterator
+                            // See https://doc.rust-lang.org/std/result/index.html#collecting-into-result
+                            .collect::<Result<Vec<ViewFish>, ServerPacketParsingError>>()?,
+                    ))
+                }
+            }
             other => Err(UnsupportedCommand(other.to_string())),
         }
     }

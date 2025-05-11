@@ -68,6 +68,36 @@ int main(int argc, char **argv) {
         assert(next_fish(NULL) == NULL);
     }
 
+    {
+        add_fish(f1);
+        fp = next_fish(NULL);
+        assert((strcmp(fp->name, f1.name) == 0) &&
+               (fp->current_x == f1.current_x) &&
+               (fp->current_y == f1.current_y) && (fp->width == f1.width) &&
+               (fp->height == f1.height) && (fp->target_x == f1.target_x) &&
+               (fp->target_y == f1.target_y) &&
+               (fp->time_left == f1.time_left));
+
+        struct fish_t f2 = {.name = "bloblo",
+                            .current_x = 5,
+                            .current_y = 3,
+                            .width = 4,
+                            .height = 4,
+                            .target_x = 8,
+                            .target_y = 9,
+                            .time_left = 3};
+
+        add_fish(f2);
+
+        fp = next_fish(fp);
+        assert((strcmp(fp->name, f2.name) == 0) &&
+               (fp->current_x == f2.current_x) &&
+               (fp->current_y == f2.current_y) && (fp->width == f2.width) &&
+               (fp->height == f2.height) && (fp->target_x == f2.target_x) &&
+               (fp->target_y == f2.target_y) &&
+               (fp->time_left == f2.time_left));
+    }
+
     remove_all_fishes();
 
     return 0;

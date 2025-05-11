@@ -20,8 +20,9 @@ struct parse {
  * @param receive_buffer command from client
  * @param send_buffer response for client
  *
+ * returns 1 if con to close, 0 if ok and something else if an issue arised
  */
-int handle_client_request(struct viewer_config_t **viewer_config,
+int handle_client_request(int fd, struct viewer_config_t **viewer_config,
                           char *receive_buffer, size_t receive_buffer_len,
                           char *send_buffer, size_t send_buffer_capacity);
 

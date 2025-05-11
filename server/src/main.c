@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
     UNUSED(argc);
     UNUSED(argv);
 
-    pthread_t thread_connexion;
+    srand(time(NULL));
 
     printf("Server vroum vroum config\n");
     if (config_from_file(&config, "./controller.cfg") != 0) {
@@ -193,11 +193,35 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    struct fish_t f1 = {.name = "blublu",
+                        .current_x = 5,
+                        .current_y = 3,
+                        .width = 16,
+                        .height = 20,
+                        .target_x = 52,
+                        .target_y = 12,
+                        .time_left = 3};
+    add_fish(f1);
+
+    struct fish_t f2 = {.name = "bloblo",
+                        .current_x = 5,
+                        .current_y = 3,
+                        .width = 12,
+                        .height = 12,
+                        .target_x = 208,
+                        .target_y = 407,
+                        .time_left = 3};
+    add_fish(f2);
+
+    pthread_t thread_connexion;
     pthread_create(&thread_connexion, NULL, start, NULL);
     pthread_detach(thread_connexion);
-    // pthread_create(&thread_connexion, NULL, start, (void *)config);
 
-    // init config structur of controller configuration file
+    pthread_t thread_sea;
+    pthread_create(&thread_sea, NULL, (void *(*)(void *))run_sea, NULL);
+    pthread_detach(thread_sea);
+
+    // init config struct of controller configuration file
     char input[MAX_INPUT];
     while (1) {
         printf("> ");

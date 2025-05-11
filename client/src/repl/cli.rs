@@ -2,6 +2,7 @@ use std::io;
 
 use crate::network::api::{FishApi, FishApiError, Transport};
 use crate::network::protocol::{ClientPacket, Fish, ServerPacket};
+use crate::view::display;
 
 pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     mut api_fish: FishApi<T>,
@@ -108,6 +109,13 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
             }
             "quit" => {
                 if command_parts.next().is_none() {
+                    // Exit API
+                    if let Err(e) = api_fish.exit() {
+                        eprintln!("Error while exiting fish API: {:?}", e);
+                    }
+                    // Exit display
+                    display::exit();
+                    // Exit CLI
                     break;
                 } else {
                     println!("Usage: quit");
@@ -119,7 +127,7 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
             }
         }
     }
-    println!("bye bye");
+    println!("Exiting fish CLI");
 }
 
 fn help() {

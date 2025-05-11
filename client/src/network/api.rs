@@ -148,8 +148,17 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                 match transport.try_receive() {
                     Ok(Some(p @ (ServerPacket::Ok | ServerPacket::NOk))) => {
                         if let Err(e) = response_tx.send(CommandResult::try_from(p).unwrap()) {
-                            eprintln!("Error when sending to transport {:?}", e);
+                            eprintln!("Error when transmitting response {:?}", e);
                         }
+                    }
+                    Ok(Some(ServerPacket::Bye)) => {
+                        if let Err(e) = response_tx.send(CommandResult::Ok) {
+                            eprintln!("Error when transmitting response {:?}", e);
+                        }
+
+                        println!("Received bye, exiting fish API");
+
+                        break;
                     }
                     Ok(Some(p)) => response_handler(p),
                     Ok(None) => {
@@ -166,6 +175,8 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
                 // Anyway, sleep to prevent consuming too much CPU
                 sleep(Duration::from_millis(100));
             }
+
+            println!("Exiting fish API thread");
         });
 
         (
@@ -184,6 +195,13 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         self.request_tx
             .send(ClientPacket::GetFishesContinuously)
             .map_err(FishApiError::RequestError)
+    }
+
+    pub fn exit(&mut self) -> Result<CommandResult, FishApiError> {
+        self.request_tx
+            .send(ClientPacket::LogOut)
+            .map_err(FishApiError::RequestError)?;
+        self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 
     pub fn add_fish(&mut self, fish: Fish) -> Result<CommandResult, FishApiError> {

@@ -90,6 +90,9 @@ void run_sea() {
                 continue;
             }
 
+            f->last_x = f->current_x;
+            f->last_y = f->current_y;
+
             if (f->time_left > 0) {
                 float vx = (f->target_x - f->current_x) / f->time_left;
                 float vy = (f->target_y - f->current_y) / f->time_left;

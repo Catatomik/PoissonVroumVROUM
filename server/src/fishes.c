@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define FISH_SPEED 100.0
+
 // declare struct for a head of list of elem's
 TAILQ_HEAD(fishes_list_t, fish_t);
 
@@ -125,7 +127,7 @@ void run_sea() {
                 float dx = f->target_x - f->current_x;
                 float dy = f->target_y - f->current_y;
                 float distance = sqrt(dx * dx + dy * dy);
-                f->time_left = distance / 50.0;
+                f->time_left = distance / FISH_SPEED;
             }
             f->time_left -= 1.0;
         }

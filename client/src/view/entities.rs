@@ -1,31 +1,31 @@
+use raylib::texture::Texture2D;
+
 #[derive(Debug, Clone)]
-pub struct Fish {
-    pub name: String,
-    pub target_x: f32,
-    pub target_y: f32,
-    pub timestamp: std::time::Instant,
-    pub size_w: f32,
-    pub size_h: f32,
+pub struct Fish<'a> {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub texture: &'a Texture2D,
     pub is_started: bool,
 }
 
-impl Fish {
+impl<'a> Fish<'a> {
     pub fn new(
-        name: impl Into<String>,
         target_x: f32,
         target_y: f32,
-        size_w: f32,
-        size_h: f32,
-        timestamp: std::time::Instant,
+        width: f32,
+        height: f32,
+        texture: &'a Texture2D,
         is_started: bool,
     ) -> Self {
         Self {
-            name: name.into(),
-            target_x,
-            target_y,
-            size_w,
-            size_h,
-            timestamp,
+            // Default position : if it was not already displayed, spawn it at its target
+            x: target_x,
+            y: target_y,
+            width,
+            height,
+            texture,
             is_started,
         }
     }

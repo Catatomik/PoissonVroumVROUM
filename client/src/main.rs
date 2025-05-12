@@ -66,7 +66,8 @@ fn main() {
     fish_api.start().unwrap();
 
     // Start loop of the app
-    thread::spawn(move || command_loop(fish_api));
+    let fishes_cli = fishes.clone();
+    thread::spawn(move || command_loop(fish_api, &fishes_cli));
 
     // Start display
     view::display::display(fishes, viewer_config, config.get_resources());

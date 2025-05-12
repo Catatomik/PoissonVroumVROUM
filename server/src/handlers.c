@@ -102,8 +102,8 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
             any_part_of_the_fish_at_target_in_view) {
 
             // convert fish coordinates to percentage of view window
-            float rel_x = ((f->current_x - view_x) * 100.0) / view_width;
-            float rel_y = ((f->current_y - view_y) * 100.0) / view_height;
+            float rel_x = ((f->target_x - view_x) * 100.0) / view_width;
+            float rel_y = ((f->target_y - view_y) * 100.0) / view_height;
 
             printed_count +=
                 snprintf(send_buffer + printed_count,

@@ -107,7 +107,8 @@ void run_sea() {
                     f->current_y = viewers_config.height - f->height;
             }
 
-            if (f->time_left - 1. <= 0.) {
+            f->time_left -= 1.0;
+            if (f->time_left <= 0.) {
                 // - fish size to not go out of the aquarium
                 f->target_x = ((float)rand() / RAND_MAX) *
                               (viewers_config.width - f->width);
@@ -119,7 +120,6 @@ void run_sea() {
                 float distance = sqrt(dx * dx + dy * dy);
                 f->time_left = distance / FISH_SPEED;
             }
-            f->time_left -= 1.0;
         }
         pthread_mutex_unlock(&fishes_list_lock);
         usleep(1000000);

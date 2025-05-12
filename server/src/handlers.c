@@ -149,7 +149,7 @@ void *get_fishes_continuously_start(void *gargs) {
             send_buffer[send_length] = '\0';
             printf("[DEBUG] sending '%s'\n", send_buffer);
         }
-        sleep(1);
+        usleep(config.fish_update_interval * 1000000);
         memset(send_buffer, 0, 1024);
     }
 

@@ -97,8 +97,8 @@ void run_sea() {
                 float vx = (f->target_x - f->current_x) / f->time_left;
                 float vy = (f->target_y - f->current_y) / f->time_left;
 
-                f->current_x += vx * 1.0;
-                f->current_y += vy * 1.0;
+                f->current_x += vx * config.fish_update_interval;
+                f->current_y += vy * config.fish_update_interval;
 
                 if (f->current_x < 0)
                     f->current_x = 0;
@@ -110,7 +110,7 @@ void run_sea() {
                     f->current_y = viewers_config.height - f->height;
             }
 
-            f->time_left -= 1.0;
+            f->time_left -= config.fish_update_interval;
             if (f->time_left <= 0.) {
                 // - fish size to not go out of the aquarium
                 f->target_x = ((float)rand() / RAND_MAX) *
@@ -125,6 +125,6 @@ void run_sea() {
             }
         }
         pthread_mutex_unlock(&fishes_list_lock);
-        usleep(1000000);
+        usleep(config.fish_update_interval * 1000000);
     }
 }

@@ -31,6 +31,7 @@ struct Cli {
 pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: ServerPacket) {
     match packet {
         ServerPacket::Pong => {
+            #[cfg(debug_assertions)]
             println!("Pong!");
         }
         ServerPacket::FishesList(list) => {
@@ -40,7 +41,7 @@ pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: Serve
             fishes_lock.splice(0..(1.max(new_length) - 1).min(1.max(old_length) - 1), list);
             fishes_lock.truncate(new_length);
         }
-        _ => unimplemented!(),
+        _ => eprintln!("Unexpected packet to handle"),
     }
 }
 

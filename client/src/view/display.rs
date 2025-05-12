@@ -9,7 +9,13 @@ use std::{
 
 use std::path::PathBuf;
 
+static EXIT_REQUESTED: Mutex<bool> = Mutex::new(false);
+static EXITED: Mutex<()> = Mutex::new(());
+
+/// Starts displaying
 pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig, path: PathBuf) {
+    let _unused = EXITED.lock().expect("Exit lock acquire on display startup");
+
     let (mut rl, thread) = raylib::init()
         .size(viewer_config.width as i32, viewer_config.height as i32)
         .title("Aquarium")
@@ -58,7 +64,7 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
     );
     let origin = Vector2::new(0.0, 0.0);
 
-    while !rl.window_should_close() {
+    while !rl.window_should_close() && !*EXIT_REQUESTED.lock().unwrap() {
         let dt = rl.get_frame_time();
         rl.set_target_fps(60);
         let mut d = rl.begin_drawing(&thread);
@@ -69,6 +75,8 @@ pub fn display(new_fish_list: Arc<Mutex<Vec<Fish>>>, viewer_config: ViewerConfig
             display_fish(&mut d, texture, fish, 0.0);
         }
     }
+
+    println!("Exiting display");
 }
 
 // function which takes the current version of the fish and the new version of the fish and the dt(delays of a frame)
@@ -163,4 +171,13 @@ fn find_right_texture<'a>(
     let name_f = name_fish.split('_').next().unwrap_or("default");
     let fish_path = format!("{}.png", name_f);
     map_fish_texture.get(&fish_path).unwrap_or(default)
+}
+
+pub fn exit() {
+    {
+        let mut exit_requested_lock = EXIT_REQUESTED.lock().unwrap();
+        *exit_requested_lock = true;
+    }
+    // Wait for EXITED lock to be unlocked
+    let _unused = EXITED.lock();
 }

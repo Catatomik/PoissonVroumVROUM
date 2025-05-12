@@ -9,8 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_FISH_TARGET_TIME 10
-
 // declare struct for a head of list of elem's
 TAILQ_HEAD(fishes_list_t, fish_t);
 
@@ -90,8 +88,6 @@ void run_sea() {
                 continue;
             }
 
-            // printf("fish %s | time left: %f\n", f->name, f->time_left);
-
             if (f->time_left > 0) {
                 float dx = f->target_x - f->current_x;
                 float dy = f->target_y - f->current_y;
@@ -120,16 +116,16 @@ void run_sea() {
             }
 
             if (f->time_left - 1. <= 0.) {
-                // printf("[LOG] timer hit 0, getting a new target\n");
-                f->time_left = rand() % MAX_FISH_TARGET_TIME + 1;
-
                 // - fish size to not go out of the aquarium
                 f->target_x = ((float)rand() / RAND_MAX) *
                               (viewers_config.width - f->width);
                 f->target_y = ((float)rand() / RAND_MAX) *
                               (viewers_config.height - f->height);
-                // printf("[LOG] new target (%f, %f) in %f\n", f->target_x,
-                //        f->target_y, f->time_left);
+
+                float dx = f->target_x - f->current_x;
+                float dy = f->target_y - f->current_y;
+                float distance = sqrt(dx * dx + dy * dy);
+                f->time_left = distance / 50.0;
             }
             f->time_left -= 1.0;
         }

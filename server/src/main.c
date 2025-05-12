@@ -193,26 +193,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    struct fish_t f1 = {.name = "blublu",
-                        .current_x = 5,
-                        .current_y = 3,
-                        .width = 16,
-                        .height = 20,
-                        .target_x = 52,
-                        .target_y = 12,
-                        .time_left = 3};
-    add_fish(f1);
-
-    struct fish_t f2 = {.name = "bloblo",
-                        .current_x = 5,
-                        .current_y = 3,
-                        .width = 12,
-                        .height = 12,
-                        .target_x = 208,
-                        .target_y = 407,
-                        .time_left = 3};
-    add_fish(f2);
-
     pthread_t thread_connexion;
     pthread_create(&thread_connexion, NULL, start, NULL);
     pthread_detach(thread_connexion);

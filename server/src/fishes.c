@@ -91,30 +91,20 @@ void run_sea() {
             }
 
             if (f->time_left > 0) {
-                float dx = f->target_x - f->current_x;
-                float dy = f->target_y - f->current_y;
-                float distance = sqrt(dx * dx + dy * dy);
+                float vx = (f->target_x - f->current_x) / f->time_left;
+                float vy = (f->target_y - f->current_y) / f->time_left;
 
-                float total_time = f->time_left + 1.0;
-                float speed_factor = 1.0 / total_time;
+                f->current_x += vx * 1.0;
+                f->current_y += vy * 1.0;
 
-                float step_size = distance * speed_factor;
-                if (distance > 0.1) {
-                    float dir_x = dx / distance;
-                    float dir_y = dy / distance;
-
-                    f->current_x += dir_x * step_size;
-                    f->current_y += dir_y * step_size;
-
-                    if (f->current_x < 0)
-                        f->current_x = 0;
-                    if (f->current_y < 0)
-                        f->current_y = 0;
-                    if (f->current_x > viewers_config.width - f->width)
-                        f->current_x = viewers_config.width - f->width;
-                    if (f->current_y > viewers_config.height - f->height)
-                        f->current_y = viewers_config.height - f->height;
-                }
+                if (f->current_x < 0)
+                    f->current_x = 0;
+                if (f->current_y < 0)
+                    f->current_y = 0;
+                if (f->current_x > viewers_config.width - f->width)
+                    f->current_x = viewers_config.width - f->width;
+                if (f->current_y > viewers_config.height - f->height)
+                    f->current_y = viewers_config.height - f->height;
             }
 
             if (f->time_left - 1. <= 0.) {

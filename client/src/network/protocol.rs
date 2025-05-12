@@ -1,6 +1,5 @@
 //! Internal communication protocol
 
-use crate::view::entities::Fish as ViewFish;
 use std::{
     fmt,
     str::FromStr,
@@ -20,7 +19,7 @@ pub enum ServerPacket {
     /// - position to go to
     /// - size (hitbox)
     /// - time to move
-    FishesList(Vec<ViewFish>),
+    FishesList(Vec<Fish>),
     Ok,
     NOk,
     Bye,
@@ -127,17 +126,16 @@ impl FromStr for ServerPacket {
                             .split("] [")
                             // all ] or [ are removed
                             .map(|fish_slice| {
-                                // At this point, fish_slice is like "fish_name at XxY,WxH,delay"
+                                // At this point, fish_slice is like "name at XxY,WxH,delay"
                                 let mut splitted = fish_slice.split(" at ");
                                 // Separate fish name from props
-                                let (fish_name, mut props) =
-                                    if let (Some(fish_name), Some(props), None) =
-                                        (splitted.next(), splitted.next(), splitted.next())
-                                    {
-                                        Ok((fish_name, props.split(',')))
-                                    } else {
-                                        Err(InvalidFormat)
-                                    }?;
+                                let (name, mut props) = if let (Some(name), Some(props), None) =
+                                    (splitted.next(), splitted.next(), splitted.next())
+                                {
+                                    Ok((name, props.split(',')))
+                                } else {
+                                    Err(InvalidFormat)
+                                }?;
 
                                 // Parse props parts
                                 let (mut coords, mut size, time) =
@@ -163,30 +161,35 @@ impl FromStr for ServerPacket {
                                     }?;
 
                                 // Parse size parts
-                                let (size_w, size_h) = if let (Some(size_w), Some(size_h), None) =
+                                let (width, height) = if let (Some(width), Some(height), None) =
                                     (size.next(), size.next(), size.next())
                                 {
                                     Ok((
-                                        size_w.parse::<f32>().map_err(|_| InvalidFormat)?,
-                                        size_h.parse::<f32>().map_err(|_| InvalidFormat)?,
+                                        width.parse::<f32>().map_err(|_| InvalidFormat)?,
+                                        height.parse::<f32>().map_err(|_| InvalidFormat)?,
                                     ))
                                 } else {
                                     Err(InvalidFormat)
                                 }?;
 
                                 // Parse time
-                                let timestamp = Instant::now()
+                                let arriving_at = Instant::now()
                                     + Duration::from_secs_f32(
                                         time.parse().map_err(|_| InvalidFormat)?,
                                     );
 
-                                Ok(ViewFish::new(
-                                    fish_name, target_x, target_y, size_w, size_h, timestamp, false,
-                                ))
+                                Ok(Fish {
+                                    name: name.to_owned(),
+                                    target_x,
+                                    target_y,
+                                    width,
+                                    height,
+                                    arriving_at,
+                                })
                             })
                             // Collect into a Result because it implements FromIterator
                             // See https://doc.rust-lang.org/std/result/index.html#collecting-into-result
-                            .collect::<Result<Vec<ViewFish>, ServerPacketParsingError>>()?,
+                            .collect::<Result<Vec<Fish>, ServerPacketParsingError>>()?,
                     ))
                 }
             }
@@ -210,7 +213,7 @@ pub enum ClientPacket {
     LsFishes(Option<usize>),
     /// Continuously ask for fishes
     GetFishesContinuously,
-    AddFish(Fish),
+    AddFish(FishToAdd),
     DelFish(String),
     /// VroumVROUM
     StartFish(String),
@@ -245,11 +248,21 @@ impl fmt::Display for ClientPacket {
 }
 
 #[derive(Debug)]
-pub struct Fish {
+pub struct FishToAdd {
     pub name: String,
     pub position_x: u32,
     pub position_y: u32,
     pub length: u32,
     pub height: u32,
     pub behavior: String,
+}
+
+#[derive(Debug)]
+pub struct Fish {
+    pub name: String,
+    pub target_x: f32,
+    pub target_y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub arriving_at: Instant,
 }

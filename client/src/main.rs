@@ -5,7 +5,11 @@ mod view;
 
 use clap::Parser;
 use config::Config;
-use network::{api::FishApi, protocol::ServerPacket, tcp::TcpClient};
+use network::{
+    api::FishApi,
+    protocol::{Fish, ServerPacket},
+    tcp::TcpClient,
+};
 use repl::cli::command_loop;
 use std::{
     net::SocketAddrV4,
@@ -13,7 +17,6 @@ use std::{
     sync::{Arc, Mutex},
     thread,
 };
-use view::entities;
 
 #[derive(Parser)]
 #[command(name = "PoissonVroumVROUM")]
@@ -28,7 +31,7 @@ struct Cli {
     config: PathBuf,
 }
 
-pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<entities::Fish>>>, packet: ServerPacket) {
+pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<Fish>>>, packet: ServerPacket) {
     match packet {
         ServerPacket::Pong => {
             #[cfg(debug_assertions)]

@@ -1,7 +1,7 @@
 use std::io;
 
 use crate::network::api::{FishApi, FishApiError, Transport};
-use crate::network::protocol::{ClientPacket, Fish, ServerPacket};
+use crate::network::protocol::{ClientPacket, FishToAdd, ServerPacket};
 use crate::view::display;
 
 pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
@@ -153,7 +153,7 @@ fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     height: u32,
     behavior: &str,
 ) {
-    let new_fish = Fish {
+    let new_fish = FishToAdd {
         name: String::from(name),
         position_x: x,
         position_y: y,

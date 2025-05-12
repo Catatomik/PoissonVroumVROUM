@@ -262,7 +262,7 @@ int responseToDel(char *args, size_t args_len, char *send_buffer,
 /**
  * start the fish by given an target and a time left
  */
-int responseToStrat(char *args, size_t args_len, char *send_buffer,
+int responseToStart(char *args, size_t args_len, char *send_buffer,
                     size_t send_buffer_capacity) {
     if (args_len <= 0) {
         snprintf(send_buffer, send_buffer_capacity,
@@ -275,16 +275,14 @@ int responseToStrat(char *args, size_t args_len, char *send_buffer,
         return -1;
     }
 
-    struct fish_t *existedFish = next_fish(NULL);
-    while (existedFish != NULL) {
-        if (strcmp(existedFish->name, name) == 0) {
-            existedFish->target_x = rand() % viewers_config.width;
-            existedFish->target_y = rand() % viewers_config.height;
-            existedFish->time_left = rand() % 10;
+    struct fish_t *f = next_fish(NULL);
+    while (f != NULL) {
+        if (strcmp(f->name, name) == 0) {
+            f->started = true;
             snprintf(send_buffer, send_buffer_capacity, "OK\n");
             return 0;
         }
-        existedFish = next_fish(existedFish);
+        f = next_fish(f);
     }
     snprintf(send_buffer, send_buffer_capacity, "NOK\n");
     return 0;
@@ -320,7 +318,7 @@ int handle_client_request(int fd, struct viewer_config_t **viewer_config,
                              send_buffer, send_buffer_capacity);
     }
     if (strncmp(receive_buffer, "startFish", 9) == 0) {
-        return responseToStrat(receive_buffer + 10, receive_buffer_len,
+        return responseToStart(receive_buffer + 10, receive_buffer_len,
                                send_buffer, send_buffer_capacity);
     }
 

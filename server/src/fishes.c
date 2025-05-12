@@ -86,6 +86,10 @@ void run_sea() {
         pthread_mutex_lock(&fishes_list_lock);
         struct fish_t *f;
         TAILQ_FOREACH(f, &fishes, _next) {
+            if (!f->started) {
+                continue;
+            }
+
             // printf("fish %s | time left: %f\n", f->name, f->time_left);
 
             if (f->time_left > 0) {

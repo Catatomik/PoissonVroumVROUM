@@ -1,5 +1,6 @@
 #ifndef __FISHES_H__
 #define __FISHES_H__
+#include <stdbool.h>
 #include <sys/queue.h>
 
 #define FISH_NAME_MAX_LENGTH 32
@@ -10,6 +11,7 @@ struct fish_t {
     float width, height;
     float target_x, target_y;
     float time_left;
+    bool started;
     TAILQ_ENTRY(fish_t) _next;
 };
 

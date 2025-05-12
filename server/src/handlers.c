@@ -88,17 +88,22 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
     struct fish_t *f = next_fish(NULL);
     while (f != NULL) {
         // if any part of the fish is visible in the view window, send it
-        if ((f->current_x < view_x + view_width) &&
+        bool any_part_of_the_fish_in_view =
+            (f->current_x < view_x + view_width) &&
             (f->current_x + f->width > view_x) &&
             (f->current_y < view_y + view_height) &&
-            (f->current_y + f->height > view_y)) {
+            (f->current_y + f->height > view_y);
+        bool any_part_of_the_fish_at_target_in_view =
+            (f->target_x < view_x + view_width) &&
+            (f->target_x + f->width > view_x) &&
+            (f->target_y < view_y + view_height) &&
+            (f->target_y + f->height > view_y);
+        if (any_part_of_the_fish_in_view ||
+            any_part_of_the_fish_at_target_in_view) {
 
-            // convert fish coordinates to percentage of view window & clamp to
-            // percentages
+            // convert fish coordinates to percentage of view window
             float rel_x = ((f->current_x - view_x) * 100.0) / view_width;
             float rel_y = ((f->current_y - view_y) * 100.0) / view_height;
-            rel_x = rel_x < 0 ? 0 : (rel_x > 100 ? 100 : rel_x);
-            rel_y = rel_y < 0 ? 0 : (rel_y > 100 ? 100 : rel_y);
 
             printed_count +=
                 snprintf(send_buffer + printed_count,

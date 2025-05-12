@@ -70,6 +70,7 @@ int config_socket(int portno, const char *ip_addr,
 
 #define RECEIVE_BUFFER_CAPACITY 256
 #define SEND_BUFFER_CAPACITY 512
+#define TIMEOUT_SECONDS 30
 
 void *thread_function_client(void *args) {
     threads_client_args_t *client_args = (threads_client_args_t *)args;
@@ -82,7 +83,26 @@ void *thread_function_client(void *args) {
     char receive_buffer[RECEIVE_BUFFER_CAPACITY] = {0};
     char send_buffer[SEND_BUFFER_CAPACITY] = {0};
 
+    fd_set read_fds;
+    struct timeval timeout;
+
     while (!is_fd_closed(client_sockfd)) {
+        FD_ZERO(&read_fds);
+        FD_SET(client_sockfd, &read_fds);
+
+        timeout.tv_sec = TIMEOUT_SECONDS;
+        timeout.tv_usec = 0;
+
+        int activity =
+            select(client_sockfd + 1, &read_fds, NULL, NULL, &timeout);
+
+        if (activity == 0) {
+            // Timeout reached with no activity
+            printf("[INFO] Timeout client %d, closing connection\n", thread_id);
+            close(client_sockfd);
+            break;
+        }
+
         int n = read(client_sockfd, receive_buffer + receive_buffer_len,
                      RECEIVE_BUFFER_CAPACITY - receive_buffer_len - 1);
         if (n < 0) {

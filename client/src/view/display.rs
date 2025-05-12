@@ -68,9 +68,9 @@ pub fn display(
     );
     let origin = Vector2::new(0.0, 0.0);
 
+    rl.set_target_fps(60);
     while !rl.window_should_close() && !*EXIT_REQUESTED.lock().unwrap() {
         let dt = rl.get_frame_time();
-        rl.set_target_fps(60);
         let mut d = rl.begin_drawing(&thread);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
         refresh_fishes(

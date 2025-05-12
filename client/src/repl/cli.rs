@@ -1,11 +1,14 @@
 use std::io;
+use std::sync::{Arc, Mutex};
 
 use crate::network::api::{FishApi, FishApiError, Transport};
 use crate::network::protocol::{ClientPacket, FishToAdd, ServerPacket};
 use crate::view::display;
+use crate::view::entities::Fish;
 
 pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     mut api_fish: FishApi<T>,
+    list_fish: &Arc<Mutex<Vec<Fish>>>,
 ) {
     println!("\nWelcome to PoissonVroumVROUM");
     loop {
@@ -27,7 +30,7 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
         match main_command {
             "status" => {
                 if command_parts.next().is_none() {
-                    status();
+                    status(list_fish);
                 } else {
                     println!("Usage: status");
                 }
@@ -140,8 +143,12 @@ fn help() {
     println!("\thelp : you just used it...");
 }
 
-fn status() {
+fn status(list_fish: &Arc<Mutex<Vec<Fish>>>) {
+    let list_fish_lock = list_fish.lock().unwrap();
+    let len_list = list_fish_lock.len();
     println!("Status controller");
+    println!("    => OK : {} poissons trouvés", len_list);
+    list_fish_lock.iter().for_each(|e| println!("{}", e));
 }
 
 fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(

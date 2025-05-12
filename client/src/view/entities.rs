@@ -1,5 +1,7 @@
 use raylib::texture::Texture2D;
 
+use std::fmt;
+
 #[derive(Debug, Clone)]
 pub struct Fish<'a> {
     pub x: f32,
@@ -28,5 +30,13 @@ impl<'a> Fish<'a> {
             texture,
             is_started,
         }
+    }
+}
+
+impl fmt::Display for Fish {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ", self.name)?;
+        write!(f, "at {}x{}", self.target_x, self.target_y)?;
+        writeln!(f, "{}x{} ", self.size_w, self.size_h)
     }
 }

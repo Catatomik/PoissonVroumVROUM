@@ -223,6 +223,7 @@ int responseToAdd(char *args, size_t args_len, char *send_buffer,
     newFish.last_y = newFish.current_y;
     newFish.target_x = newFish.current_x;
     newFish.target_y = newFish.current_y;
+    newFish.started = false;
     newFish.time_left = 0;
 
     struct fish_t *existedFish = next_fish(NULL);

@@ -16,7 +16,8 @@ struct config_t config;
 int help() {
     printf("ERROR : command not recognized\n you can make these cmds :\n\t> "
            "load <viewers config filepaths>\n\t> show aquarium\n\t> add view "
-           "<Nid XxY+width+height>\n\t> del view <id>\n\t> save <file name>\n");
+           "<Nid XxY+width+height>\n\t> del view <id>\n\t> save <file "
+           "name>\n\t> close server\n");
     return 0;
 }
 
@@ -172,6 +173,9 @@ int repl_handler(char *input) {
     }
     if (strncmp(input, "save ", 5) == 0) {
         return save(input + 5);
+    }
+    if (strncmp(input, "close server", 12) == 0) {
+        return 123456789;
     } else {
         return help();
     }
@@ -180,6 +184,7 @@ int repl_handler(char *input) {
 int main(int argc, char **argv) {
     UNUSED(argc);
     UNUSED(argv);
+    int close_value = 0;
 
     srand(time(NULL));
 
@@ -216,7 +221,12 @@ int main(int argc, char **argv) {
             break;
         }
 
-        repl_handler(input);
+        close_value = repl_handler(input);
+        if (close_value == 123456789) {
+            viewers_config_free_internals(&viewers_config);
+            remove_all_fishes();
+            return 0;
+        }
     }
 
     return 0;

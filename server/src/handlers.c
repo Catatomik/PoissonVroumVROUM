@@ -111,7 +111,7 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
                 send_buffer + printed_count,
                 send_buffer_capacity - printed_count,
                 " [%s at %.0fx%.0f,%fx%f,%f]", f->name, rel_x, rel_y, f->width,
-                f->height, (!fish_was_already_in_view) ? 0 : f->time_left);
+                f->height, (!f->started || !fish_was_already_in_view) ? 0 : f->time_left);
             if (printed_count > send_buffer_capacity)
                 goto err;
         }

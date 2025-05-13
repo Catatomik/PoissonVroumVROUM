@@ -7,11 +7,12 @@ use clap::Parser;
 use config::Config;
 use network::{
     api::FishApi,
-    protocol::{Fish, ServerPacket},
+    protocol::{self, ServerPacket},
     tcp::TcpClient,
 };
 use repl::cli::command_loop;
 use std::{
+    collections::HashMap,
     net::SocketAddrV4,
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -31,7 +32,7 @@ struct Cli {
     config: PathBuf,
 }
 
-pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<Fish>>>, packet: ServerPacket) {
+pub fn handle_packet(fishes: &mut Arc<Mutex<Vec<protocol::Fish>>>, packet: ServerPacket) {
     match packet {
         ServerPacket::Pong => {
             #[cfg(debug_assertions)]
@@ -68,10 +69,17 @@ fn main() {
     // Temp ping to check API connection
     fish_api.start().unwrap();
 
+    let display_fish_map = Arc::new(Mutex::new(HashMap::new()));
+
+    let cli_display_fish_map = display_fish_map.clone();
     // Start loop of the app
-    let fishes_cli = fishes.clone();
-    thread::spawn(move || command_loop(fish_api, &fishes_cli));
+    thread::spawn(move || command_loop(fish_api, cli_display_fish_map));
 
     // Start display
-    view::display::display(fishes, viewer_config, config.get_resources());
+    view::display::display(
+        fishes,
+        display_fish_map,
+        viewer_config,
+        config.get_resources(),
+    );
 }

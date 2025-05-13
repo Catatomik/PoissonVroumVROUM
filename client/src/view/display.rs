@@ -15,6 +15,7 @@ static EXITED: Mutex<()> = Mutex::new(());
 /// Starts displaying
 pub fn display(
     target_fish_list: Arc<Mutex<Vec<protocol::Fish>>>,
+    displayed_fish_map: Arc<Mutex<HashMap<String, entities::Fish>>>,
     viewer_config: ViewerConfig,
     path: PathBuf,
 ) {
@@ -39,7 +40,6 @@ pub fn display(
     let fish_names = ["fish1.png", "fish2.png", "default.png"];
 
     let mut fish_texture_map: HashMap<String, Texture2D> = HashMap::new();
-    let mut current_fish_map: HashMap<String, entities::Fish> = HashMap::new();
 
     for &fish in &fish_names {
         let fish_path = format!("{}/{}", path_ressources, fish);
@@ -73,15 +73,23 @@ pub fn display(
         let dt = rl.get_frame_time();
         let mut d = rl.begin_drawing(&thread);
         d.draw_texture_pro(&bg_texture, bg_source, bg_dest, origin, 0.0, Color::WHITE);
+
+        let mut displayed_fish_map_lock = displayed_fish_map.lock().unwrap();
+
         refresh_fishes(
-            &mut current_fish_map,
+            &mut displayed_fish_map_lock,
             &target_fish_list,
             dt,
             &viewer_config,
-            (&fish_texture_map, &fish_texture_default),
         );
-        for (_, fish) in current_fish_map.iter() {
-            display_fish(&mut d, fish, 0.0);
+        for (fish_name, fish) in displayed_fish_map_lock.iter() {
+            display_fish(
+                &mut d,
+                (&fish_texture_map, &fish_texture_default),
+                fish_name,
+                fish,
+                0.0,
+            );
         }
     }
 
@@ -119,36 +127,34 @@ fn move_fish(
 }
 
 // function which takes the list of the current fishes and one of the new one and calculate the new current positions of the fishes
-fn refresh_fishes<'a>(
-    current_fish_map: &mut HashMap<String, entities::Fish<'a>>,
+fn refresh_fishes(
+    displayed_fish_map: &mut HashMap<String, entities::Fish>,
     target_fish_list: &Arc<Mutex<Vec<protocol::Fish>>>,
     dt: f32,
     viewer_config: &ViewerConfig,
-    fish_textures: (&'a HashMap<String, Texture2D>, &'a Texture2D),
 ) {
     let target_fish_list_guard = target_fish_list.lock().unwrap();
 
     for target_fish in target_fish_list_guard.iter() {
-        if !current_fish_map.contains_key(&target_fish.name) {
+        if !displayed_fish_map.contains_key(&target_fish.name) {
             // New fish received, add it to our fishes
-            current_fish_map.insert(
+            displayed_fish_map.insert(
                 target_fish.name.clone(),
                 entities::Fish::new(
                     (target_fish.target_x * viewer_config.width as f32) / 100.0,
                     (target_fish.target_y * viewer_config.height as f32) / 100.0,
                     (target_fish.width * viewer_config.width as f32) / 100.0,
                     (target_fish.height * viewer_config.height as f32) / 100.0,
-                    find_right_texture(&target_fish.name, fish_textures.0, fish_textures.1),
                     false,
                 ),
             );
-        } else if let Some(current_fish) = current_fish_map.get_mut(&target_fish.name) {
+        } else if let Some(current_fish) = displayed_fish_map.get_mut(&target_fish.name) {
             move_fish(current_fish, target_fish, dt, viewer_config);
         }
     }
 
     // on checke les fish qui ne sont plus envoyés par le serveur ie ont été supprimés
-    current_fish_map.retain(|current_fish_name, _| {
+    displayed_fish_map.retain(|current_fish_name, _| {
         // Keep it if it's found in the new list
         target_fish_list_guard
             .iter()
@@ -157,12 +163,19 @@ fn refresh_fishes<'a>(
 }
 
 //display a fish with a texture, a fish and the rotation
-fn display_fish(d: &mut RaylibDrawHandle, fish: &entities::Fish, rotation: f32) {
-    let scale_x = fish.width / fish.texture.width() as f32;
-    let scale_y = fish.height / fish.texture.height() as f32;
+fn display_fish(
+    d: &mut RaylibDrawHandle,
+    fish_textures: (&HashMap<String, Texture2D>, &Texture2D),
+    fish_name: &str,
+    fish: &entities::Fish,
+    rotation: f32,
+) {
+    let texture = find_right_texture(fish_name, fish_textures);
+    let scale_x = fish.width / texture.width() as f32;
+    let scale_y = fish.height / texture.height() as f32;
 
     d.draw_texture_ex(
-        fish.texture,
+        texture,
         Vector2::new(fish.x, fish.y),
         rotation,
         scale_x.min(scale_y),
@@ -172,12 +185,11 @@ fn display_fish(d: &mut RaylibDrawHandle, fish: &entities::Fish, rotation: f32) 
 
 fn find_right_texture<'a>(
     name_fish: &str,
-    fish_texture_map: &'a HashMap<String, Texture2D>,
-    default: &'a Texture2D,
+    fish_textures: (&'a HashMap<String, Texture2D>, &'a Texture2D),
 ) -> &'a Texture2D {
     let name_f = name_fish.split('_').next().unwrap_or("default");
     let fish_path = format!("{}.png", name_f);
-    fish_texture_map.get(&fish_path).unwrap_or(default)
+    fish_textures.0.get(&fish_path).unwrap_or(fish_textures.1)
 }
 
 pub fn exit() {

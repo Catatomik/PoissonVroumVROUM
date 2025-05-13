@@ -202,7 +202,8 @@ int pong(char *args, size_t args_len, char *send_buffer,
 /**
  * add the fish by calling add_fish
  */
-int responseToAdd(char *args, size_t args_len, char *send_buffer,
+int responseToAdd(struct viewer_config_t *viewer_config, char *args,
+                  size_t args_len, char *send_buffer,
                   size_t send_buffer_capacity) {
     if (args_len <= 0) {
         snprintf(send_buffer, send_buffer_capacity,
@@ -216,6 +217,11 @@ int responseToAdd(char *args, size_t args_len, char *send_buffer,
         printf("command unrecognized\n");
         return -1;
     }
+
+    newFish.current_x =
+        viewer_config->x + viewer_config->width * newFish.current_x / 100;
+    newFish.current_y =
+        viewer_config->y + viewer_config->height * newFish.current_y / 100;
 
     newFish.target_x = newFish.current_x;
     newFish.target_y = newFish.current_y;
@@ -315,8 +321,9 @@ int handle_client_request(int fd, struct viewer_config_t **viewer_config,
                     send_buffer_capacity);
     }
     if (strncmp(receive_buffer, "addFish", 7) == 0) {
-        return responseToAdd(receive_buffer + 8, receive_buffer_len,
-                             send_buffer, send_buffer_capacity);
+        return responseToAdd(*viewer_config, receive_buffer + 8,
+                             receive_buffer_len, send_buffer,
+                             send_buffer_capacity);
     }
     if (strncmp(receive_buffer, "delFish", 7) == 0) {
         return responseToDel(receive_buffer + 8, receive_buffer_len,

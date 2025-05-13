@@ -119,8 +119,6 @@ fn move_fish(
         let v_y = (target_fish.target_y / 100.0 * viewer_config.height as f32 - current_fish.y)
             / duration;
 
-        println!("speed {}+{}={} ; dt {}", v_x, v_y, v_x + v_y, dt);
-
         current_fish.x += v_x * dt;
         current_fish.y += v_y * dt;
     }

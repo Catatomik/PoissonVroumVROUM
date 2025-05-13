@@ -143,10 +143,16 @@ fn refresh_fishes(
                     (target_fish.target_y * viewer_config.height as f32) / 100.0,
                     (target_fish.width * viewer_config.width as f32) / 100.0,
                     (target_fish.height * viewer_config.height as f32) / 100.0,
+                    // If it's received for the first time, it's not started from our point of view
                     false,
                 ),
             );
         } else if let Some(current_fish) = displayed_fish_map.get_mut(&target_fish.name) {
+            // Fish is not new, update the currently displayed one
+            // Start it if it was not and arriving_at > now
+            if !current_fish.is_started && target_fish.arriving_at > Instant::now() {
+                current_fish.is_started = true;
+            }
             move_fish(current_fish, target_fish, dt, viewer_config);
         }
     }

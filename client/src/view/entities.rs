@@ -24,6 +24,18 @@ impl Fish {
 
 impl fmt::Display for Fish {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "at {}x{},{}x{}", self.x, self.y, self.width, self.height)
+        write!(
+            f,
+            "at {}x{},{}x{} {}",
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+            if self.is_started {
+                "started"
+            } else {
+                "notStarted"
+            }
+        )
     }
 }

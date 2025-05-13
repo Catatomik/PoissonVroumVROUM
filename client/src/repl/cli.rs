@@ -147,7 +147,7 @@ fn status(displayed_fish_map: &Arc<Mutex<HashMap<String, entities::Fish>>>) {
     let displayed_fish_map_lock = displayed_fish_map.lock().unwrap();
     let len_list = displayed_fish_map_lock.len();
     println!("Status controller");
-    println!("    => OK : {} poissons trouvés", len_list);
+    println!("    => OK : {} poisson(s) trouvé(s)", len_list);
     displayed_fish_map_lock
         .iter()
         .for_each(|(fish_name, fish)| println!("{} {}", fish_name, fish));

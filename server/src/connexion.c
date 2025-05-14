@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define MAX_NB_CLIENT_THREADS 100
+
 int is_fd_closed(int fd) {
     int flags = fcntl(fd, F_GETFD);
     if (flags == -1 && errno == EBADF) {
@@ -157,9 +159,7 @@ void *thread_function_client(void *args) {
 int cli_addr_len = sizeof(struct sockaddr_in);
 void *start(void *_) {
     int next_id = 0;
-    int thread_id;
     int nb_thread_used = 0;
-    pthread_t thread_client;
     pthread_mutex_init(&mutex, NULL); // Initialisation du mutex
 
     int sockfd, newsockfd;
@@ -177,12 +177,12 @@ void *start(void *_) {
         if (newsockfd < 0)
             error("ERROR on accept");
 
-        if (nb_thread_used < 5) {
+        if (nb_thread_used < MAX_NB_CLIENT_THREADS) {
             pthread_mutex_lock(&mutex);
             nb_thread_used += 1;
             pthread_mutex_unlock(&mutex);
 
-            thread_id = next_id++;
+            int thread_id = next_id++;
             printf("nb_thread_used %d\n", nb_thread_used);
 
             // structure create for good argument in thread function
@@ -191,6 +191,7 @@ void *start(void *_) {
             args->nb_thread_used = &nb_thread_used;
             args->thread_id = thread_id;
 
+            pthread_t thread_client;
             if (pthread_create(&thread_client, NULL, thread_function_client,
                                (void *)args)) {
                 fprintf(stderr, "ERROR creation client thread\n");
@@ -198,12 +199,12 @@ void *start(void *_) {
                 free(args);
                 continue;
             }
+            // not pthread_join because we don't wait the end of thread
+            // (parallize)
+            pthread_detach(thread_client);
         } else {
             usleep(3);
         }
-
-        // not pthread_join because we don't wait the end of thread (parallize)
-        pthread_detach(thread_client);
     }
 
     pthread_mutex_destroy(&mutex);

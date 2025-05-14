@@ -227,7 +227,6 @@ int responseToAdd(struct viewer_config_t *viewer_config, char *args,
     newFish.current_y =
         viewer_config->y + viewer_config->height * newFish.current_y / 100;
 
-
     newFish.last_x = newFish.current_x;
     newFish.last_y = newFish.current_y;
 

@@ -4,6 +4,7 @@
 #include <sys/queue.h>
 
 #define FISH_NAME_MAX_LENGTH 32
+#define FISH_UPDATE_INTERVAL 0.1
 
 struct fish_t {
     char name[FISH_NAME_MAX_LENGTH];

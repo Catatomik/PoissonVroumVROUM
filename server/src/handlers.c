@@ -218,7 +218,7 @@ int responseToAdd(struct viewer_config_t *viewer_config, char *args,
     if (sscanf(args, "%s at %fx%f,%fx%f,RandomWayPoint", newFish.name,
                &newFish.current_x, &newFish.current_y, &newFish.width,
                &newFish.height) < 5) {
-        printf("command unrecognized\n");
+        snprintf(send_buffer, send_buffer_capacity, "NOK\n");
         return -1;
     }
 
@@ -264,7 +264,7 @@ int responseToDel(char *args, size_t args_len, char *send_buffer,
     }
     char name[FISH_NAME_MAX_LENGTH];
     if (sscanf(args, "%s", name) < 1) {
-        printf("command unrecognized\n");
+        snprintf(send_buffer, send_buffer_capacity, "NOK\n");
         return -1;
     }
 
@@ -293,7 +293,7 @@ int responseToStart(char *args, size_t args_len, char *send_buffer,
     }
     char name[FISH_NAME_MAX_LENGTH];
     if (sscanf(args, "%s", name) < 1) {
-        printf("command unrecognized\n");
+        snprintf(send_buffer, send_buffer_capacity, "NOK\n");
         return -1;
     }
 

@@ -110,8 +110,9 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
             printed_count += snprintf(
                 send_buffer + printed_count,
                 send_buffer_capacity - printed_count,
-                " [%s at %.0fx%.0f,%fx%f,%f]", f->name, rel_x, rel_y, f->width,
-                f->height,
+                " [%s at %.0fx%.0f,%fx%f,%f]", f->name, rel_x, rel_y,
+                f->width / viewer_config->width * 100,
+                f->height / viewer_config->height * 100,
                 (!f->started || !fish_was_already_in_view) ? 0 : f->time_left);
             if (printed_count > send_buffer_capacity)
                 goto err;
@@ -220,6 +221,9 @@ int responseToAdd(struct viewer_config_t *viewer_config, char *args,
         printf("command unrecognized\n");
         return -1;
     }
+
+    newFish.width *= (float)viewer_config->width / 100;
+    newFish.height *= (float)viewer_config->height / 100;
 
     newFish.current_x =
         viewer_config->x + viewer_config->width * newFish.current_x / 100;

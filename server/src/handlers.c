@@ -2,14 +2,16 @@
 #include "config.h"
 #include "fishes.h"
 #include "parse_viewers_config.h"
+#include "utils.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
-#define SEND_BUFFER_CAPACITY 512
+#define SEND_BUFFER_CAPACITY 2048
 
 struct config_and_send_t {
     struct viewer_config_t **assigned_config;
@@ -79,14 +81,16 @@ bool is_in_view(float x, float y, float w, float h,
            (y + h > viewer_config->y);
 }
 
-int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
-               size_t send_buffer_capacity) {
+bool get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
+                size_t send_buffer_capacity) {
     assert(viewer_config !=
            NULL); // cannot send to a viewer which doesn't exist
 
     int printed_count = snprintf(send_buffer, send_buffer_capacity, "list");
     if (printed_count > send_buffer_capacity)
         goto err;
+
+    bool fishes_fresh = false;
 
     struct fish_t *f = next_fish(NULL);
     while (f != NULL) {
@@ -107,6 +111,9 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
             float rel_y =
                 ((sent_y - viewer_config->y) * 100.0) / viewer_config->height;
 
+            if (!fish_was_already_in_view)
+                fishes_fresh = true;
+
             printed_count += snprintf(
                 send_buffer + printed_count,
                 send_buffer_capacity - printed_count,
@@ -120,7 +127,7 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
         f = next_fish(f);
     }
     send_buffer[printed_count] = '\n';
-    return 0;
+    return fishes_fresh;
 
 err:
     fprintf(stderr,
@@ -140,19 +147,36 @@ void *get_fishes_continuously_start(void *gargs) {
     PRINT_DEBUG("[LOG] starting get_fishes_continuously thread for fd %d\n",
                 args->fd);
 
-    char send_buffer[1024] = {0};
+    char send_buffer[SEND_BUFFER_CAPACITY] = {0};
+
+    long long last_sent = 0;
+    struct timespec tmp;
+    clock_gettime(CLOCK_REALTIME, &tmp);
+    long long now = tmp.tv_sec * 1000 + tmp.tv_nsec / 1e6;
+
     while (write(args->fd, "", 0) != -1) {
-        get_fishes(args->viewer_config, send_buffer, 1024);
-        size_t send_length = strnlen(send_buffer, 1024);
-        if (send_length > 0) {
-            int n = write(args->fd, send_buffer, send_length);
-            if (n < 0)
-                fprintf(stderr, "[ERR] ERROR writing to socket");
-            send_buffer[send_length] = '\0';
-            printf("[DEBUG] sending '%s'\n", send_buffer);
+        bool fishes_fresh =
+            get_fishes(args->viewer_config, send_buffer, SEND_BUFFER_CAPACITY);
+
+        clock_gettime(CLOCK_REALTIME, &tmp);
+        now = tmp.tv_sec * 1000 + tmp.tv_nsec / 1e6;
+
+        if (fishes_fresh ||
+            now - last_sent >= config.fish_update_interval * 1000) {
+            size_t send_length = strnlen(send_buffer, SEND_BUFFER_CAPACITY);
+            if (send_length > 0) {
+                int n = write(args->fd, send_buffer, send_length);
+                if (n < 0)
+                    fprintf(stderr, "[ERR] ERROR writing to socket");
+                send_buffer[send_length] = '\0';
+                PRINT_DEBUG("[DEBUG] sending '%s'\n", send_buffer);
+            }
+
+            last_sent = now;
         }
-        usleep(config.fish_update_interval * 1000000);
-        memset(send_buffer, 0, 1024);
+
+        usleep(FISH_UPDATE_INTERVAL * 1e6);
+        memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
     }
 
     free(gargs); // ugly but since the thread is detached, It's necessary
@@ -277,6 +301,7 @@ int responseToDel(char *args, size_t args_len, char *send_buffer,
         }
         existedFish = next_fish(existedFish);
     }
+
     snprintf(send_buffer, send_buffer_capacity, "NOK\n");
     return 0;
 }
@@ -306,6 +331,7 @@ int responseToStart(char *args, size_t args_len, char *send_buffer,
         }
         f = next_fish(f);
     }
+
     snprintf(send_buffer, send_buffer_capacity, "NOK\n");
     return 0;
 }

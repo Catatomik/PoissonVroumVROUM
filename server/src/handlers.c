@@ -221,7 +221,6 @@ int responseToAdd(struct viewer_config_t *viewer_config, char *args,
         return -1;
     }
 
-
     newFish.current_x =
         viewer_config->x + viewer_config->width * newFish.current_x / 100;
     newFish.current_y =

@@ -32,8 +32,8 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
         for (int i = 0; i < viewers_config.viewers_count; i++) {
             if (!viewers_config.viewers_configs[i].is_in_use) {
                 *assigned_config = &viewers_config.viewers_configs[i];
-                printf("no id provided, assigning id N%d\n",
-                       (*assigned_config)->id);
+                PRINT_DEBUG("no id provided, assigning id N%d\n",
+                            (*assigned_config)->id);
                 break;
             }
         }
@@ -46,8 +46,8 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
             }
         }
     } else {
-        fprintf(stderr, "[WARN] client tried conecting with 'hello %s'\n",
-                args);
+        PRINT_DEBUG(stderr, "[WARN] client tried connecting with 'hello %s'\n",
+                    args);
     }
     if (*assigned_config == NULL) {
         snprintf(send_buffer, send_buffer_capacity, "no greeting\n");
@@ -136,8 +136,8 @@ struct continuously_thread_args {
 void *get_fishes_continuously_start(void *gargs) {
     assert(gargs != NULL); // should always be non null
     struct continuously_thread_args *args = gargs;
-    printf("[LOG] starting get_fishes_continuously thread for fd %d\n",
-           args->fd);
+    PRINT_DEBUG("[LOG] starting get_fishes_continuously thread for fd %d\n",
+                args->fd);
 
     char send_buffer[1024] = {0};
     while (write(args->fd, "", 0) != -1) {

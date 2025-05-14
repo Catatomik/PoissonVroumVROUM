@@ -26,7 +26,7 @@ int help() {
  */
 int load(char *input) {
     if (strlen(input) <= 0) {
-        printf("No path to viewer config given\n");
+        fprintf(stderr, "No path to viewer config given\n");
         return 1;
     }
     struct viewers_config_t backup = viewers_config;
@@ -41,8 +41,8 @@ int load(char *input) {
     // remove all fishes from last configuration
     remove_all_fishes();
 
-    printf("aquarium loaded (%d display view!)\n",
-           viewers_config.viewers_count);
+    PRINT_DEBUG("aquarium loaded (%d display view!)\n",
+                viewers_config.viewers_count);
     return 0;
 }
 
@@ -68,12 +68,12 @@ int add(char *input) {
     struct viewer_config_t newViewer;
     if (sscanf(input, "N%d %dx%d+%d+%d", &newViewer.id, &newViewer.x,
                &newViewer.y, &newViewer.width, &newViewer.height) < 5) {
-        printf("command unrecognized\n");
+        fprintf(stderr, "command unrecognized\n");
         return 1;
     }
     for (int i = 0; i < viewers_config.viewers_count; i++) {
         if (viewers_config.viewers_configs[i].id == newViewer.id) {
-            printf("this id is already used for an other view\n");
+            fprintf(stderr, "this id is already used for an other view\n");
             return 1;
         }
     }
@@ -99,7 +99,7 @@ int overwrite(int i) {
 int del(char *input) {
     int id;
     if (sscanf(input, "N%d", &id) != 1) {
-        printf("command unrecognized\n");
+        fprintf(stderr, "command unrecognized\n");
         return 1;
     }
     for (int i = 0; i < viewers_config.viewers_count; i++) {
@@ -114,7 +114,7 @@ int del(char *input) {
             return 0;
         }
     }
-    printf("view N%d not found\n", id);
+    fprintf(stderr, "view N%d not found\n", id);
     return 1;
 }
 
@@ -123,7 +123,7 @@ int del(char *input) {
  */
 int save(char *input) {
     if (strlen(input) <= 0) {
-        printf("need a name to save config file\n");
+        fprintf(stderr, "need a name to save config file\n");
         return 1;
     }
 
@@ -157,7 +157,7 @@ int save(char *input) {
  * return 0 if succes 1 else
  */
 int repl_handler(char *input) {
-    printf("your command is %s\n", input);
+    PRINT_DEBUG("your command is %s\n", input);
 
     if (strncmp(input, "load ", 5) == 0) {
         return load(input + 5);

@@ -162,8 +162,7 @@ void *start(void *_) {
             nb_thread_used += 1;
             pthread_mutex_unlock(&mutex);
 
-            int thread_id;
-            thread_id = next_id++;
+            int thread_id = next_id++;
             printf("nb_thread_used %d\n", nb_thread_used);
 
             // structure create for good argument in thread function
@@ -178,11 +177,11 @@ void *start(void *_) {
                 fprintf(stderr, "ERROR creation client thread\n");
                 close(newsockfd);
                 free(args);
-                // not pthread_join because we don't wait the end of thread
-                // (parallize)
-                pthread_detach(thread_client);
                 continue;
             }
+            // not pthread_join because we don't wait the end of thread
+            // (parallize)
+            pthread_detach(thread_client);
         } else {
             usleep(3);
         }

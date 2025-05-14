@@ -2,32 +2,21 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Fish {
-    pub name: String,
-    pub target_x: f32,
-    pub target_y: f32,
-    pub timestamp: std::time::Instant,
-    pub size_w: f32,
-    pub size_h: f32,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
     pub is_started: bool,
 }
 
 impl Fish {
-    pub fn new(
-        name: impl Into<String>,
-        target_x: f32,
-        target_y: f32,
-        size_w: f32,
-        size_h: f32,
-        timestamp: std::time::Instant,
-        is_started: bool,
-    ) -> Self {
+    pub fn new(target_x: f32, target_y: f32, width: f32, height: f32, is_started: bool) -> Self {
         Self {
-            name: name.into(),
-            target_x,
-            target_y,
-            size_w,
-            size_h,
-            timestamp,
+            // Default position : if it was not already displayed, spawn it at its target
+            x: target_x,
+            y: target_y,
+            width,
+            height,
             is_started,
         }
     }
@@ -35,8 +24,18 @@ impl Fish {
 
 impl fmt::Display for Fish {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} ", self.name)?;
-        write!(f, "at {}x{}", self.target_x, self.target_y)?;
-        writeln!(f, "{}x{} ", self.size_w, self.size_h)
+        write!(
+            f,
+            "at {}x{},{}x{} {}",
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+            if self.is_started {
+                "started"
+            } else {
+                "notStarted"
+            }
+        )
     }
 }

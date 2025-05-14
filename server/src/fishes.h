@@ -7,6 +7,7 @@
 
 struct fish_t {
     char name[FISH_NAME_MAX_LENGTH];
+    float last_x, last_y;
     float current_x, current_y;
     float width, height;
     float target_x, target_y;

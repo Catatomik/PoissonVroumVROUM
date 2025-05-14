@@ -34,7 +34,7 @@ int config_from_file(struct config_t *config, const char *cfgpath) {
             display_timeout_value_found = true;
         }
         if (strncmp(buffer, "fish-update-interval", 20) == 0) {
-            sscanf(value_start, "%d", &config->fish_update_interval);
+            sscanf(value_start, "%f", &config->fish_update_interval);
             fish_update_interval_found = true;
         }
     }

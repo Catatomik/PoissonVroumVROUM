@@ -1,6 +1,6 @@
 //! General API to communicate trough a [transport] using [protocol]
 
-use super::protocol::{ClientPacket, Fish, ServerPacket};
+use super::protocol::{ClientPacket, FishToAdd, ServerPacket};
 use crate::config::Config;
 use std::{
     fmt::{self, Debug},
@@ -204,7 +204,7 @@ impl<T: Transport<ClientPacket, ServerPacket> + Send + 'static> FishApi<T> {
         self.response_rx.recv().map_err(FishApiError::ResponseError)
     }
 
-    pub fn add_fish(&mut self, fish: Fish) -> Result<CommandResult, FishApiError> {
+    pub fn add_fish(&mut self, fish: FishToAdd) -> Result<CommandResult, FishApiError> {
         self.request_tx
             .send(ClientPacket::AddFish(fish))
             .map_err(FishApiError::RequestError)?;

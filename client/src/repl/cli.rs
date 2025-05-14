@@ -1,14 +1,14 @@
+use std::collections::HashMap;
 use std::io;
 use std::sync::{Arc, Mutex};
 
 use crate::network::api::{FishApi, FishApiError, Transport};
-use crate::network::protocol::{ClientPacket, ServerPacket};
-use crate::view::display;
-use crate::view::entities::Fish;
+use crate::network::protocol::{ClientPacket, FishToAdd, ServerPacket};
+use crate::view::{display, entities};
 
 pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     mut api_fish: FishApi<T>,
-    list_fish: &Arc<Mutex<Vec<Fish>>>,
+    displayed_fish_map: Arc<Mutex<HashMap<String, entities::Fish>>>,
 ) {
     println!("\nWelcome to PoissonVroumVROUM");
     loop {
@@ -30,7 +30,7 @@ pub fn command_loop<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
         match main_command {
             "status" => {
                 if command_parts.next().is_none() {
-                    status(list_fish);
+                    status(&displayed_fish_map);
                 } else {
                     println!("Usage: status");
                 }
@@ -143,12 +143,14 @@ fn help() {
     println!("\thelp : you just used it...");
 }
 
-fn status(list_fish: &Arc<Mutex<Vec<Fish>>>) {
-    let list_fish_lock = list_fish.lock().unwrap();
-    let len_list = list_fish_lock.len();
+fn status(displayed_fish_map: &Arc<Mutex<HashMap<String, entities::Fish>>>) {
+    let displayed_fish_map_lock = displayed_fish_map.lock().unwrap();
+    let len_list = displayed_fish_map_lock.len();
     println!("Status controller");
-    println!("    => OK : {} poissons trouvés", len_list);
-    list_fish_lock.iter().for_each(|e| println!("{}", e));
+    println!("    => OK : {} poisson(s) trouvé(s)", len_list);
+    displayed_fish_map_lock
+        .iter()
+        .for_each(|(fish_name, fish)| println!("{} {}", fish_name, fish));
 }
 
 fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
@@ -160,7 +162,7 @@ fn add_fish<T: Transport<ClientPacket, ServerPacket> + Send + 'static>(
     height: u32,
     behavior: &str,
 ) {
-    let new_fish = crate::network::protocol::Fish {
+    let new_fish = FishToAdd {
         name: String::from(name),
         position_x: x,
         position_y: y,

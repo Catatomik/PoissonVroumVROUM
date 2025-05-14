@@ -71,15 +71,18 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
     return 0;
 }
 
+bool is_in_view(float x, float y, float w, float h,
+                struct viewer_config_t *viewer_config) {
+    return (x < viewer_config->x + viewer_config->width) &&
+           (x + w > viewer_config->x) &&
+           (y < viewer_config->y + viewer_config->height) &&
+           (y + h > viewer_config->y);
+}
+
 int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
                size_t send_buffer_capacity) {
     assert(viewer_config !=
            NULL); // cannot send to a viewer which doesn't exist
-
-    int view_x = viewer_config->x;
-    int view_y = viewer_config->y;
-    int view_width = viewer_config->width;
-    int view_height = viewer_config->height;
 
     int printed_count = snprintf(send_buffer, send_buffer_capacity, "list");
     if (printed_count > send_buffer_capacity)
@@ -88,28 +91,28 @@ int get_fishes(struct viewer_config_t *viewer_config, char *send_buffer,
     struct fish_t *f = next_fish(NULL);
     while (f != NULL) {
         // if any part of the fish is visible in the view window, send it
-        bool any_part_of_the_fish_in_view =
-            (f->current_x < view_x + view_width) &&
-            (f->current_x + f->width > view_x) &&
-            (f->current_y < view_y + view_height) &&
-            (f->current_y + f->height > view_y);
-        bool any_part_of_the_fish_at_target_in_view =
-            (f->target_x < view_x + view_width) &&
-            (f->target_x + f->width > view_x) &&
-            (f->target_y < view_y + view_height) &&
-            (f->target_y + f->height > view_y);
-        if (any_part_of_the_fish_in_view ||
-            any_part_of_the_fish_at_target_in_view) {
+        bool fish_was_already_in_view = is_in_view(
+            f->last_x, f->last_y, f->width, f->height, viewer_config);
+
+        if (is_in_view(f->current_x, f->current_y, f->width, f->height,
+                       viewer_config)) {
+            float sent_x =
+                (!fish_was_already_in_view) ? f->current_x : f->target_x;
+            float sent_y =
+                (!fish_was_already_in_view) ? f->current_y : f->target_y;
 
             // convert fish coordinates to percentage of view window
-            float rel_x = ((f->current_x - view_x) * 100.0) / view_width;
-            float rel_y = ((f->current_y - view_y) * 100.0) / view_height;
+            float rel_x =
+                ((sent_x - viewer_config->x) * 100.0) / viewer_config->width;
+            float rel_y =
+                ((sent_y - viewer_config->y) * 100.0) / viewer_config->height;
 
-            printed_count +=
-                snprintf(send_buffer + printed_count,
-                         send_buffer_capacity - printed_count,
-                         " [%s at %.0fx%.0f,%fx%f,%f]", f->name, rel_x, rel_y,
-                         f->width, f->height, f->time_left);
+            printed_count += snprintf(
+                send_buffer + printed_count,
+                send_buffer_capacity - printed_count,
+                " [%s at %.0fx%.0f,%fx%f,%f]", f->name, rel_x, rel_y, f->width,
+                f->height,
+                (!f->started || !fish_was_already_in_view) ? 0 : f->time_left);
             if (printed_count > send_buffer_capacity)
                 goto err;
         }
@@ -147,7 +150,7 @@ void *get_fishes_continuously_start(void *gargs) {
             send_buffer[send_length] = '\0';
             printf("[DEBUG] sending '%s'\n", send_buffer);
         }
-        sleep(1);
+        usleep(config.fish_update_interval * 1000000);
         memset(send_buffer, 0, 1024);
     }
 
@@ -218,13 +221,19 @@ int responseToAdd(struct viewer_config_t *viewer_config, char *args,
         return -1;
     }
 
+
     newFish.current_x =
         viewer_config->x + viewer_config->width * newFish.current_x / 100;
     newFish.current_y =
         viewer_config->y + viewer_config->height * newFish.current_y / 100;
 
+
+    newFish.last_x = newFish.current_x;
+    newFish.last_y = newFish.current_y;
+
     newFish.target_x = newFish.current_x;
     newFish.target_y = newFish.current_y;
+    newFish.started = false;
     newFish.time_left = 0;
 
     struct fish_t *existedFish = next_fish(NULL);

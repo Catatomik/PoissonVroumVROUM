@@ -42,7 +42,8 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
     } else if (matched_count == 1) {
         // if an id is specified, search it in the viewers config array
         for (int i = 0; i < viewers_config.viewers_count; i++) {
-            if (viewers_config.viewers_configs[i].id == requested_id) {
+            if (viewers_config.viewers_configs[i].id == requested_id &&
+                !viewers_config.viewers_configs[i].is_in_use) {
                 *assigned_config = &viewers_config.viewers_configs[i];
                 break;
             }

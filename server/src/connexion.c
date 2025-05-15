@@ -73,7 +73,7 @@ int config_socket(int portno, const char *ip_addr,
 
 #define RECEIVE_BUFFER_CAPACITY 256
 #define SEND_BUFFER_CAPACITY 512
-#define TIMEOUT_SECONDS 30
+#define TIMEOUT_SECONDS 32
 
 void *thread_function_client(void *args) {
     threads_client_args_t *client_args = (threads_client_args_t *)args;

@@ -49,8 +49,7 @@ int greeting(struct viewer_config_t **assigned_config, char *args,
             }
         }
     } else {
-        PRINT_DEBUG(stderr, "[WARN] client tried connecting with 'hello %s'\n",
-                    args);
+        PRINT_DEBUG("[WARN] client tried connecting with 'hello %s'\n", args);
     }
     if (*assigned_config == NULL) {
         snprintf(send_buffer, send_buffer_capacity, "no greeting\n");

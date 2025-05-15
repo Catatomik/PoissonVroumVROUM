@@ -5,6 +5,7 @@
 #include "handlers.h"
 #include "parse_cfg.h"
 #include "parse_viewers_config.h"
+#include "utils.h"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -78,7 +79,9 @@ void *thread_function_client(void *args) {
     threads_client_args_t *client_args = (threads_client_args_t *)args;
     int client_sockfd = client_args->client_sockfd;
     int *nb_thread_used = client_args->nb_thread_used;
+#ifdef DEBUG
     int thread_id = client_args->thread_id;
+#endif
     struct viewer_config_t *viewer_config = NULL;
 
     size_t receive_buffer_len = 0;
@@ -100,7 +103,8 @@ void *thread_function_client(void *args) {
 
         if (activity == 0) {
             // Timeout reached with no activity
-            printf("[INFO] Timeout client %d, closing connection\n", thread_id);
+            PRINT_DEBUG("[INFO] Timeout client %d, closing connection\n",
+                        thread_id);
             close(client_sockfd);
             break;
         }
@@ -117,8 +121,8 @@ void *thread_function_client(void *args) {
 
         if (strchr(receive_buffer, '\n') != NULL) {
             // we have a full command
-            printf("The message from client %d: %s\n", thread_id,
-                   receive_buffer);
+            PRINT_DEBUG("The message from client %d: %s\n", thread_id,
+                        receive_buffer);
             memset(send_buffer, 0, SEND_BUFFER_CAPACITY);
 
             int res = handle_client_request(client_sockfd, &viewer_config,
@@ -152,7 +156,7 @@ void *thread_function_client(void *args) {
     pthread_mutex_lock(&mutex);
     *nb_thread_used -= 1;
     pthread_mutex_unlock(&mutex);
-    printf("[INFO] client %d disconnected\n", thread_id);
+    PRINT_DEBUG("[INFO] client %d disconnected\n", thread_id);
     return NULL;
 }
 
@@ -166,8 +170,8 @@ void *start(void *_) {
     struct sockaddr_in serv_addr, cli_addr;
 
     sockfd = config_socket(config.controller_port, "127.0.0.1", &serv_addr);
-    printf("[INFO] server started! Listening to connections on port %d\n",
-           config.controller_port);
+    PRINT_DEBUG("[INFO] server started! Listening to connections on port %d\n",
+                config.controller_port);
 
     // Add infinite loop to keep server running and accept new connections
     while (true) {
@@ -183,7 +187,7 @@ void *start(void *_) {
             pthread_mutex_unlock(&mutex);
 
             int thread_id = next_id++;
-            printf("nb_thread_used %d\n", nb_thread_used);
+            PRINT_DEBUG("nb_thread_used %d\n", nb_thread_used);
 
             // structure create for good argument in thread function
             threads_client_args_t *args = malloc(sizeof(threads_client_args_t));

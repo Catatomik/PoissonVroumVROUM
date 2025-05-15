@@ -56,25 +56,24 @@ where
     }
 
     fn try_receive(&mut self) -> Result<Option<Res>, Self::ResponseError> {
-        const BUF_SIZE: usize = 512;
+        const BUF_SIZE: usize = 2048;
 
         let mut buf = [0u8; BUF_SIZE];
 
         let read_cnt = match self.stream.read(&mut buf) {
             Ok(read) => read,
             Err(e) => {
-                return if let io::ErrorKind::WouldBlock = e.kind() {
-                    Ok(None)
+                if let io::ErrorKind::WouldBlock = e.kind() {
+                    0
                 } else {
-                    Err(Self::ResponseError::Socket(e))
-                };
+                    return Err(Self::ResponseError::Socket(e));
+                }
             }
         };
-        if read_cnt == 0 {
-            return Ok(None);
-        }
 
-        self.buf.extend_from_slice(&buf[..read_cnt]);
+        if read_cnt > 0 {
+            self.buf.extend_from_slice(&buf[..read_cnt]);
+        }
 
         let newline_idx = match self.buf.iter().position(|c| *c == b'\n') {
             Some(idx) => idx,

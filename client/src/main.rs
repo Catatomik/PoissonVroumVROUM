@@ -66,7 +66,6 @@ fn main() {
             move |p| handle_packet(&mut fishes, p)
         },
     );
-    // Temp ping to check API connection
     fish_api.start().unwrap();
 
     let display_fish_map = Arc::new(Mutex::new(HashMap::new()));

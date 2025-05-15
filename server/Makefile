@@ -7,10 +7,14 @@ BUILDDIR = build
 SRCBUILDDIR = $(BUILDDIR)/src
 TESTBUILDDIR = $(BUILDDIR)/tests
 
-CFLAGS = -Wall -Werror -I$(SRCDIR) -pthread
-LDFLAGS = -lm
+override CFLAGS += -Wall -Werror -I$(SRCDIR) -pthread
+override LDFLAGS += -lm
 CFMTFLAGS ?= -style='file:.clang-format'
-VFLAGS ?= --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1
+override VFLAGS += --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1
+
+ifneq ($(DEBUG),)
+override CFLAGS += -DDEBUG
+endif
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 SRC_OBJ = $(patsubst $(SRCDIR)/%.c, $(SRCBUILDDIR)/%.o, $(SRC))
